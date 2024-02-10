@@ -1,7 +1,7 @@
 export default async function Home() {
   return (
     <div>
-      <h1>WalltApp</h1>
+      <p>Main page</p>
     </div>
   )
 }

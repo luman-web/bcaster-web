@@ -1,0 +1,9 @@
+.loginPage {
+  display: flex;
+  justify-content: center;
+  padding-top: 15vh;
+  &__form {
+    width: 100%;
+    max-width: 400px;
+  }
+}
