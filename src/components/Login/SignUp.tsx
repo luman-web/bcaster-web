@@ -42,7 +42,20 @@ export default function SignUp() {
         label="Пароль:"
         name="password"
         hasFeedback
-        rules={[{ required: true, message: 'Введите пароль' }]}
+        rules={[
+          { required: true, message: 'Введите пароль' },
+          { min: 6, message: 'Длина пароля должна быть не менее 6 символов' },
+          () => ({
+            validator(_, value) {
+              if (!value || !value.includes(' ')) {
+                return Promise.resolve()
+              }
+              return Promise.reject(
+                new Error('Пароль не должен содержать пробелы')
+              )
+            },
+          }),
+        ]}
       >
         <Input.Password />
       </Form.Item>
