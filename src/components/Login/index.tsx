@@ -1,24 +1,41 @@
 'use client'
 
-import { Tabs } from 'antd'
-import type { TabsProps } from 'antd'
+import { useState } from 'react'
 // components
-import SignIn from './SignIn'
-import SignUp from './SignUp'
-
-const items: TabsProps['items'] = [
-  {
-    key: '1',
-    label: 'Вход',
-    children: <SignIn />,
-  },
-  {
-    key: '2',
-    label: 'Регистрация',
-    children: <SignUp />,
-  },
-]
+import EmailMagicLink from './EmailMagicLink'
+import GoogleOAuth from './GoogleOAuth'
+import { Flex, Divider, Alert } from 'antd'
 
 export default function Login() {
-  return <Tabs defaultActiveKey="1" items={items} />
+  const [inProcess, setInProcess] = useState(false)
+  const [emailMagicLinkSentTo, setEmailMagicLinkSentTo] = useState(null)
+
+  if (emailMagicLinkSentTo) {
+    const message = (
+      <span>
+        Ссылка авторизации отправлена на указанную почту{' '}
+        <b>{emailMagicLinkSentTo}</b>
+      </span>
+    )
+
+    return <Alert type="success" showIcon message={message} />
+  }
+
+  return (
+    <div>
+      <EmailMagicLink
+        setInProcess={setInProcess}
+        inProcess={inProcess}
+        setEmailMagicLinkSentTo={setEmailMagicLinkSentTo}
+      />
+
+      <Divider plain style={{ marginTop: 20 }}>
+        Сервисы
+      </Divider>
+
+      <Flex justify="center" style={{ paddingTop: 10 }}>
+        <GoogleOAuth setInProcess={setInProcess} inProcess={inProcess} />
+      </Flex>
+    </div>
+  )
 }
