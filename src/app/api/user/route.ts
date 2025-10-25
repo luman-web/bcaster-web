@@ -1,22 +1,6 @@
 import { NextRequest } from 'next/server'
-import { MongoClient, ObjectId } from 'mongodb'
 import { auth } from '@/auth'
-
-const uri = process.env.MONGODB_URI!
-const options = {}
-let client: MongoClient
-let clientPromise: Promise<MongoClient>
-
-declare global {
-  var _mongoClientPromise: Promise<MongoClient>
-}
-
-// MongoDB connection reuse
-if (!global._mongoClientPromise) {
-  client = new MongoClient(uri, options)
-  global._mongoClientPromise = client.connect()
-}
-clientPromise = global._mongoClientPromise
+import pool from '@/lib/db'
 
 // GET /api/user
 export async function GET(req: NextRequest) {
@@ -25,19 +9,32 @@ export async function GET(req: NextRequest) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
   }
 
-  const client = await clientPromise
-  const db = client.db('test')
+  try {
+    const client = await pool.connect()
+    
+    try {
+      const result = await client.query(
+        'SELECT id, name, email, "emailVerified", image, created_at, updated_at FROM users WHERE id = $1',
+        [session.user.id]
+      )
 
-  const user = await db.collection('users').findOne({ _id: new ObjectId(session.user.id) })
+      if (result.rows.length === 0) {
+        return new Response(JSON.stringify({ error: 'User not found' }), { status: 404 })
+      }
 
-  if (!user) {
-    return new Response(JSON.stringify({ error: 'User not found' }), { status: 404 })
+      const user = result.rows[0]
+      
+      return new Response(JSON.stringify(user), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    } finally {
+      client.release()
+    }
+  } catch (error) {
+    console.error('Database error:', error)
+    return new Response(JSON.stringify({ error: 'Database error' }), { status: 500 })
   }
-
-  return new Response(JSON.stringify(user), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-  })
 }
 
 // PUT /api/user
@@ -47,16 +44,32 @@ export async function PUT(req: NextRequest) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
   }
 
-  const { image } = await req.json()
-  const client = await clientPromise
-  const db = client.db('test')
+  try {
+    const { image } = await req.json()
+    const client = await pool.connect()
+    
+    try {
+      const result = await client.query(
+        'UPDATE users SET image = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+        [image, session.user.id]
+      )
 
-  const result = await db.collection('users').updateOne(
-    { _id: new ObjectId(session.user.id) },
-    { $set: { image } }
-  )
+      if (result.rows.length === 0) {
+        return new Response(JSON.stringify({ error: 'User not found' }), { status: 404 })
+      }
 
-  return new Response(JSON.stringify({ success: true, modified: result.modifiedCount }), {
-    status: 200,
-  })
+      return new Response(JSON.stringify({ 
+        success: true, 
+        modified: result.rowCount,
+        user: result.rows[0]
+      }), {
+        status: 200,
+      })
+    } finally {
+      client.release()
+    }
+  } catch (error) {
+    console.error('Database error:', error)
+    return new Response(JSON.stringify({ error: 'Database error' }), { status: 500 })
+  }
 }

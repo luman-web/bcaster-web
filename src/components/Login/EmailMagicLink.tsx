@@ -33,7 +33,7 @@ export default function EmailMagicLink(props: LoginProps) {
       if (result?.error) {
         console.error('Sign-in error:', result.error)
         const errorMessage = result.error === 'Configuration' 
-          ? 'Ошибка подключения к базе данных. Проверьте что MongoDB запущен.'
+          ? 'Ошибка подключения к базе данных. Проверьте что PostgreSQL запущен и настроен.'
           : `Ошибка авторизации: ${result.error}`
         setError && setError(errorMessage)
       } else {

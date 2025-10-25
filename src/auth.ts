@@ -1,13 +1,16 @@
 import NextAuth from 'next-auth'
-import { MongoDBAdapter } from '@auth/mongodb-adapter'
+import { Pool } from 'pg'
 import authConfig from './auth.config'
 // providers
 import SendGrid from 'next-auth/providers/sendgrid'
 
-import client from './lib/db'
+import pool from './lib/db'
+
+// Import the adapter function from @auth/pg-adapter
+import PostgresAdapter from '@auth/pg-adapter'
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: MongoDBAdapter(client),
+  adapter: PostgresAdapter(pool),
   session: { strategy: 'jwt' },
   providers: [
     SendGrid({
