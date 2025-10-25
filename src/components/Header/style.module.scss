@@ -3,10 +3,14 @@
 .header {
   display: flex;
   align-items: center;
+  justify-content: center;
   height: 40px;
   background-color: $bg1;
   padding: 0 10px;
   &__body {
+    display: flex;
+    justify-content: space-between;
     flex-grow: 1;
+    max-width: $primaryWidth;
   }
 }

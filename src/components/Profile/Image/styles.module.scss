@@ -1,0 +1,20 @@
+.profileImageWrapper {
+  height: 100%;
+}
+
+.placeholder {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #ccc;
+  font-size: 50px;
+}
+
+.selectImage {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  width: calc(100% - 40px);
+}

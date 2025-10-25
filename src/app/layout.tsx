@@ -28,7 +28,9 @@ export default function RootLayout({
           <Layout style={{ minHeight: '100vh' }}>
             <Header />
             {auth}
-            <div className={styles.mainLayout__content}>{children}</div>
+            <div className={styles.mainLayout}>
+              <div className={styles.mainLayout__content}>{children}</div>
+            </div>
           </Layout>
         </AntdRegistry>
       </body>

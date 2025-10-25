@@ -1,5 +1,7 @@
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
+// components
+import Profile from '@/components/Profile'
 
 export default async function MyProfile() {
   const session = await auth()
@@ -8,5 +10,5 @@ export default async function MyProfile() {
     redirect('/login')
   }
 
-  return <div>My profile</div>
+  return <Profile />
 }

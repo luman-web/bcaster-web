@@ -14,8 +14,8 @@ export default function () {
         >
           WalltApp
         </Link>
+        <Navigation />
       </div>
-      <Navigation />
     </div>
   )
 }
