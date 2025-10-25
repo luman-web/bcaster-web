@@ -13,20 +13,39 @@ type FieldType = {
 }
 
 export default function EmailMagicLink(props: LoginProps) {
-  const { inProcess, setInProcess, setEmailMagicLinkSentTo } = props
+  const { inProcess, setInProcess, setEmailMagicLinkSentTo, setError } = props
   const initialValues = {}
 
   const onFinish = async (values: FieldType) => {
     setInProcess(true)
+    setError && setError(null) // Clear any previous errors
 
-    await signIn('sendgrid', {
-      ...values,
-      redirect: false,
-      redirectTo: '/profile',
-    })
+    try {
+      const result = await signIn('sendgrid', {
+        ...values,
+        redirect: false,
+        redirectTo: '/profile',
+      })
 
-    setInProcess(false)
-    setEmailMagicLinkSentTo(values.email)
+      console.log('signIn result:', result)
+
+      // Check if sign-in was successful
+      if (result?.error) {
+        console.error('Sign-in error:', result.error)
+        const errorMessage = result.error === 'Configuration' 
+          ? 'Ошибка подключения к базе данных. Проверьте что MongoDB запущен.'
+          : `Ошибка авторизации: ${result.error}`
+        setError && setError(errorMessage)
+      } else {
+        // Only show success message if no error
+        setEmailMagicLinkSentTo && setEmailMagicLinkSentTo(values.email)
+      }
+    } catch (error) {
+      console.error('Sign-in failed:', error)
+      setError && setError('Произошла непредвиденная ошибка при отправке ссылки')
+    } finally {
+      setInProcess(false)
+    }
   }
 
   return (
