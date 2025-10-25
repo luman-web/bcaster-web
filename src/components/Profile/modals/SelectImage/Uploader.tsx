@@ -2,32 +2,28 @@ import React, { useState, useEffect, useRef, forwardRef } from 'react'
 import { InboxOutlined, DeleteOutlined } from '@ant-design/icons'
 import { Upload, Button, Modal } from 'antd'
 import type { GetProp, UploadFile, UploadProps } from 'antd'
-import dynamic from 'next/dynamic'
 import 'react-advanced-cropper/dist/style.css'
 
 // Create a proper wrapper component with forwardRef
 const CropperComponent = forwardRef<any, any>((props, ref) => {
   const [CropperLoaded, setCropperLoaded] = useState<any>(null)
-  
+
   useEffect(() => {
     import('react-advanced-cropper').then((module) => {
       setCropperLoaded(() => module.Cropper)
     })
   }, [])
-  
+
   if (!CropperLoaded) {
     return <div>Loading cropper...</div>
   }
-  
+
   return <CropperLoaded ref={ref} {...props} />
 })
 
 CropperComponent.displayName = 'CropperComponent'
 
 type FileType = Parameters<GetProp<UploadProps, 'beforeUpload'>>[0]
-
-// Global variable to store cropper instance (outside component to persist)
-let globalCropperInstance: any = null
 
 const Uploader: React.FC = () => {
   const [fileList, setFileList] = useState<UploadFile[]>([])
@@ -41,7 +37,6 @@ const Uploader: React.FC = () => {
   useEffect(() => {
     if (cropperModalVisible && originalImage) {
       const timer = setTimeout(() => {
-        console.log('Enabling cropper button after delay')
         setCropperReady(true)
       }, 1000) // Give the cropper time to load
 
@@ -50,19 +45,17 @@ const Uploader: React.FC = () => {
   }, [cropperModalVisible, originalImage])
 
   const customRequest = ({ file, onSuccess }: any) => {
-    console.log('customRequest file:', file)
-    
     // Generate preview from the uploaded file
     const reader = new FileReader()
     reader.onload = (e) => {
       const result = e.target?.result as string
-      console.log('Setting original image for cropping')
+
       setOriginalImage(result)
       setCropperReady(false) // Reset cropper ready state
       setCropperModalVisible(true)
     }
     reader.readAsDataURL(file as File)
-    
+
     // Mark upload as successful
     setTimeout(() => {
       onSuccess && onSuccess('ok')
@@ -70,16 +63,17 @@ const Uploader: React.FC = () => {
   }
 
   const onChange: UploadProps['onChange'] = ({ fileList: newFileList }) => {
-    console.log('onChange fileList:', newFileList)
-    
     // Filter files to only include JPG and PNG images
     const filteredFileList = newFileList.filter((file) => {
       if (file.originFileObj) {
-        const isValidType = file.originFileObj.type === 'image/jpeg' || 
-                           file.originFileObj.type === 'image/jpg' || 
-                           file.originFileObj.type === 'image/png'
+        const isValidType =
+          file.originFileObj.type === 'image/jpeg' ||
+          file.originFileObj.type === 'image/jpg' ||
+          file.originFileObj.type === 'image/png'
         if (!isValidType) {
-          console.warn(`File ${file.name} is not a valid image format. Only JPG and PNG files are allowed.`)
+          console.warn(
+            `File ${file.name} is not a valid image format. Only JPG and PNG files are allowed.`
+          )
         }
         return isValidType
       }
@@ -113,21 +107,15 @@ const Uploader: React.FC = () => {
   }
 
   const handleCrop = () => {
-    console.log('handleCrop called')
-    console.log('cropperRef.current:', cropperRef.current)
-    
     if (cropperRef.current) {
       try {
         // Use the proper API from react-advanced-cropper
         const canvas = cropperRef.current.getCanvas()
-        console.log('canvas from cropper API:', canvas)
-        
+
         if (canvas) {
           const croppedImage = canvas.toDataURL('image/jpeg', 0.9)
-          console.log('croppedImage generated successfully')
           setPreviewImage(croppedImage)
         } else {
-          console.error('Canvas is null from cropper API')
           setPreviewImage(originalImage)
         }
       } catch (error) {
@@ -135,10 +123,9 @@ const Uploader: React.FC = () => {
         setPreviewImage(originalImage)
       }
     } else {
-      console.log('No cropper instance, using original image')
       setPreviewImage(originalImage)
     }
-    
+
     setCropperModalVisible(false)
   }
 
@@ -168,10 +155,14 @@ const Uploader: React.FC = () => {
   }
 
   const beforeUpload = (file: FileType) => {
-    console.log('beforeUpload file:', file)
-    const isValidType = file.type === 'image/jpeg' || file.type === 'image/jpg' || file.type === 'image/png'
+    const isValidType =
+      file.type === 'image/jpeg' ||
+      file.type === 'image/jpg' ||
+      file.type === 'image/png'
     if (!isValidType) {
-      console.warn(`File ${file.name} is not a valid image format. Only JPG and PNG files are allowed.`)
+      console.warn(
+        `File ${file.name} is not a valid image format. Only JPG and PNG files are allowed.`
+      )
       return false
     }
     return true // Allow upload to proceed to customRequest
@@ -200,24 +191,26 @@ const Uploader: React.FC = () => {
         </Upload.Dragger>
       ) : (
         <div style={{ textAlign: 'center' }}>
-          <div style={{ 
-            display: 'inline-block', 
-            position: 'relative',
-            border: '1px solid #d9d9d9',
-            borderRadius: '8px',
-            padding: '8px',
-            backgroundColor: '#fafafa'
-          }}>
+          <div
+            style={{
+              display: 'inline-block',
+              position: 'relative',
+              border: '1px solid #d9d9d9',
+              borderRadius: '8px',
+              padding: '8px',
+              backgroundColor: '#fafafa',
+            }}
+          >
             <div style={{ position: 'relative' }}>
-              <img 
-                src={previewImage} 
-                alt="Preview" 
-                style={{ 
-                  width: '200px', 
-                  height: '200px', 
+              <img
+                src={previewImage}
+                alt="Preview"
+                style={{
+                  width: '200px',
+                  height: '200px',
                   objectFit: 'cover',
-                  borderRadius: '4px'
-                }} 
+                  borderRadius: '4px',
+                }}
               />
               <Button
                 type="text"
@@ -230,24 +223,36 @@ const Uploader: React.FC = () => {
                   top: '4px',
                   right: '4px',
                   backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                  border: '1px solid #ff4d4f'
+                  border: '1px solid #ff4d4f',
                 }}
               />
             </div>
-            <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'stretch' }}>
+            <div
+              style={{
+                marginTop: '8px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                alignItems: 'stretch',
+              }}
+            >
               <div style={{ width: '100%' }}>
                 <Button style={{ width: '100%' }} onClick={changeSelected}>
                   Изменить
                 </Button>
               </div>
-              <Button type="primary" onClick={saveCropped} style={{ width: '100%' }}>
+              <Button
+                type="primary"
+                onClick={saveCropped}
+                style={{ width: '100%' }}
+              >
                 Сохранить
               </Button>
             </div>
           </div>
         </div>
       )}
-      
+
       {/* Cropper Modal */}
       <Modal
         title="Обрезать изображение"
@@ -267,7 +272,7 @@ const Uploader: React.FC = () => {
               src={originalImage}
               className="cropper"
               stencilProps={{
-                aspectRatio: 1
+                aspectRatio: 1,
               }}
               style={{ height: '100%', background: '#ddd' }}
             />
