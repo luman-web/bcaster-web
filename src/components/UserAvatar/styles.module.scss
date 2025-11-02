@@ -1,0 +1,26 @@
+.userAvatar {
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.2s ease;
+}
+
+.userAvatar:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: scale(1.05);
+}
+
+.loading {
+  background: linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0),
+              linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0);
+  background-size: 8px 8px;
+  background-position: 0 0, 4px 4px;
+  animation: shimmer 1s linear infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 0 0, 4px 4px;
+  }
+  100% {
+    background-position: 8px 8px, 12px 12px;
+  }
+}

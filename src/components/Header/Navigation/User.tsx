@@ -1,9 +1,9 @@
 import React from 'react'
 import type { MenuProps } from 'antd'
 import { Dropdown, Button } from 'antd'
-import { UserOutlined } from '@ant-design/icons'
 import Link from 'next/link'
 import { signOut } from 'next-auth/react'
+import UserAvatar from '@/components/UserAvatar'
 
 const Navigation: React.FC = () => {
   const items: MenuProps['items'] = [
@@ -20,8 +20,8 @@ const Navigation: React.FC = () => {
   return (
     <div>
       <Dropdown menu={{ items }} trigger={['click']}>
-        <Button size="small" type="text" style={{ color: 'white' }}>
-          <UserOutlined />
+        <Button size="small" type="text" style={{ color: 'white', padding: '4px', height: '40px' }}>
+          <UserAvatar size={30} />
         </Button>
       </Dropdown>
     </div>
