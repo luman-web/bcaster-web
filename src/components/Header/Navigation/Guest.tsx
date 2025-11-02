@@ -11,7 +11,7 @@ const Navigation: React.FC = () => {
       <Button
         size="small"
         type="text"
-        style={{ color: 'white' }}
+        style={{ color: 'white', height: '40px', width: '40px' }}
         onClick={() => router.push('/login')}
       >
         <LoginOutlined />
