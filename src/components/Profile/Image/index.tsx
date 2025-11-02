@@ -4,11 +4,12 @@
 import style from './styles.module.scss'
 // components
 import SelectImageModal from '../modals/SelectImage/index'
+import UploadedImage from './UploadedImage'
 
 import { useState, useEffect } from 'react'
 import { SessionProvider, useSession } from 'next-auth/react'
-import { Button, Popconfirm } from 'antd'
-import { UserOutlined, DeleteOutlined } from '@ant-design/icons'
+import { Spin } from 'antd'
+import { LoadingOutlined } from '@ant-design/icons'
 import Placeholder from './Placeholder'
 
 function ProfileImageContent() {
@@ -124,7 +125,17 @@ function ProfileImageContent() {
     return (
       <div className={style.profileImageWrapper}>
         <div className={style.placeholder}>
-          Loading...
+          <Spin
+            indicator={
+              <LoadingOutlined
+                style={{
+                  fontSize: 24,
+                  color: '#ccc',
+                }}
+                spin
+              />
+            }
+          />
         </div>
       </div>
     )
@@ -133,39 +144,12 @@ function ProfileImageContent() {
   return (
     <div className={style.profileImageWrapper}>
       {userImageUrl ? (
-        <div style={{ position: 'relative', height: '100%' }}>
-          <img
-            src={userImageUrl}
-            alt="Profile"
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-            }}
-          />
-          {/* Trash icon in top-right corner */}
-          <Popconfirm
-            title="Удалить фото профиля?"
-            onConfirm={handleDeleteImage}
-            okText="Да"
-            cancelText="Отмена"
-            disabled={isDeleting}
-          >
-            <Button
-              type="text"
-              danger
-              icon={<DeleteOutlined />}
-              size="small"
-              disabled={isDeleting}
-              className={style.profileImage}
-            />
-          </Popconfirm>
-          <div className={style.selectImage}>
-            <Button size="small" style={{ width: '100%' }} onClick={handleSelectImageClick}>
-              <span>Выбрать фото</span>
-            </Button>
-          </div>
-        </div>
+        <UploadedImage
+          imageUrl={userImageUrl}
+          onDelete={handleDeleteImage}
+          onSelectImage={handleSelectImageClick}
+          isDeleting={isDeleting}
+        />
       ) : (
         <Placeholder selectImage={handleSelectImageClick} />
       )}
