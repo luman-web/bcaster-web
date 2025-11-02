@@ -1,10 +1,11 @@
 import React from 'react'
-import { Button, Popconfirm } from 'antd'
+import { Button, Popconfirm, Image } from 'antd'
 import { DeleteOutlined } from '@ant-design/icons'
 import style from './styles.module.scss'
 
 interface UploadedImageProps {
   imageUrl: string
+  originalImageUrl?: string
   onDelete: () => void
   onSelectImage: () => void
   isDeleting: boolean
@@ -12,19 +13,26 @@ interface UploadedImageProps {
 
 const UploadedImage: React.FC<UploadedImageProps> = ({
   imageUrl,
+  originalImageUrl,
   onDelete,
   onSelectImage,
   isDeleting
 }) => {
   return (
     <div style={{ position: 'relative', height: '100%' }}>
-      <img
+      <Image
         src={imageUrl}
         alt="Profile"
         style={{
           width: '100%',
           height: '100%',
           objectFit: 'cover',
+          cursor: 'pointer',
+        }}
+        preview={{
+          mask: false, // Remove the default preview mask overlay
+          src: originalImageUrl || imageUrl, // Use original size for preview if available
+          toolbarRender: () => null, // Remove all controls from the preview
         }}
       />
       {/* Trash icon in top-right corner */}

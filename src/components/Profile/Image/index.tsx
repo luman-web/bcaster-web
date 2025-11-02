@@ -16,6 +16,7 @@ function ProfileImageContent() {
   const { data: session } = useSession()
   const [selectImageModalShown, showSelectImageModal] = useState(false)
   const [userImageUrl, setUserImageUrl] = useState<string | null>(null)
+  const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -27,6 +28,7 @@ function ProfileImageContent() {
       if (response.ok) {
         const userData = await response.json()
         setUserImageUrl(userData.image_cropped || null)
+        setOriginalImageUrl(userData.image_original || null)
       }
     } catch (error) {
       console.error('Error fetching user data:', error)
@@ -110,6 +112,7 @@ function ProfileImageContent() {
       if (updateResponse.ok) {
         console.log('Profile images cleared from database')
         setUserImageUrl(null) // Update local state
+        setOriginalImageUrl(null) // Clear original image URL
       } else {
         console.error('Failed to clear profile images from database')
       }
@@ -146,6 +149,7 @@ function ProfileImageContent() {
       {userImageUrl ? (
         <UploadedImage
           imageUrl={userImageUrl}
+          originalImageUrl={originalImageUrl || undefined}
           onDelete={handleDeleteImage}
           onSelectImage={handleSelectImageClick}
           isDeleting={isDeleting}
