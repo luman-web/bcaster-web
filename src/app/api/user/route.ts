@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     
     try {
       const result = await client.query(
-        'SELECT id, name, email, "emailVerified", image, created_at, updated_at FROM users WHERE id = $1',
+        'SELECT id, name, email, "emailVerified", image, image_original, image_cropped, image_preview, created_at, updated_at FROM users WHERE id = $1',
         [session.user.id]
       )
 
@@ -45,14 +45,42 @@ export async function PUT(req: NextRequest) {
   }
 
   try {
-    const { image } = await req.json()
+    const { image, image_original, image_cropped, image_preview } = await req.json()
     const client = await pool.connect()
     
     try {
-      const result = await client.query(
-        'UPDATE users SET image = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
-        [image, session.user.id]
-      )
+      // Build dynamic query based on provided fields
+      const updates = []
+      const values = []
+      let paramIndex = 1
+
+      if (image !== undefined) {
+        updates.push(`image = $${paramIndex++}`)
+        values.push(image)
+      }
+      if (image_original !== undefined) {
+        updates.push(`image_original = $${paramIndex++}`)
+        values.push(image_original)
+      }
+      if (image_cropped !== undefined) {
+        updates.push(`image_cropped = $${paramIndex++}`)
+        values.push(image_cropped)
+      }
+      if (image_preview !== undefined) {
+        updates.push(`image_preview = $${paramIndex++}`)
+        values.push(image_preview)
+      }
+
+      if (updates.length === 0) {
+        return new Response(JSON.stringify({ error: 'No image fields provided' }), { status: 400 })
+      }
+
+      updates.push(`updated_at = NOW()`)
+      values.push(session.user.id)
+
+      const query = `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`
+      
+      const result = await client.query(query, values)
 
       if (result.rows.length === 0) {
         return new Response(JSON.stringify({ error: 'User not found' }), { status: 404 })

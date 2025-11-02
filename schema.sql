@@ -7,7 +7,10 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(255),
     email VARCHAR(255) UNIQUE NOT NULL,
     "emailVerified" TIMESTAMPTZ,
-    image TEXT,
+    image TEXT, -- Legacy field, kept for backward compatibility
+    image_original TEXT, -- Original uploaded image URL
+    image_cropped TEXT, -- 250x250 cropped image URL
+    image_preview TEXT, -- 50x50 preview image URL
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

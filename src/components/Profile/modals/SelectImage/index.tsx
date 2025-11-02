@@ -3,6 +3,7 @@ import Uploader from './Uploader'
 
 import React from 'react'
 import { Modal } from 'antd'
+import { SessionProvider } from 'next-auth/react'
 
 type Props = {
   isOpened: boolean,
@@ -17,8 +18,14 @@ const SelectImage: React.FC<Props> = (props: Props) => {
         open={props.isOpened}
         onCancel={() => props.close()}
         footer={null}
+        destroyOnClose={true}
+        maskClosable={false}
+        keyboard={true}
+        focusTriggerAfterClose={false}
       >
-        <Uploader />
+        <SessionProvider>
+          <Uploader onSaveComplete={props.close} />
+        </SessionProvider>
       </Modal>
     </>
   )
