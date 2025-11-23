@@ -157,30 +157,18 @@ const Uploader: React.FC<UploaderProps> = ({ onSaveComplete }) => {
         return
       }
 
-      // Create 250x250 cropped version
-      const croppedCanvas250 = document.createElement('canvas')
-      croppedCanvas250.width = 250
-      croppedCanvas250.height = 250
-      const ctx250 = croppedCanvas250.getContext('2d')
-      if (ctx250) {
-        ctx250.drawImage(croppedCanvas, 0, 0, 250, 250)
-      }
-
-      // Create 50x50 preview version
-      const previewCanvas50 = document.createElement('canvas')
-      previewCanvas50.width = 50
-      previewCanvas50.height = 50
-      const ctx50 = previewCanvas50.getContext('2d')
-      if (ctx50) {
-        ctx50.drawImage(croppedCanvas, 0, 0, 50, 50)
-      }
-
       // Convert original image to file
       const originalFile = await dataURLToFile(originalImage, 'original.jpg')
       
-      // Convert canvases to files
-      const croppedFile = await canvasToFile(croppedCanvas250, 'cropped.jpg')
-      const previewFile = await canvasToFile(previewCanvas50, 'preview.jpg')
+      // Convert cropped canvas to file
+      const croppedFile = await canvasToFile(croppedCanvas, 'cropped.jpg')
+      
+      // Optimize images using the API
+      const [optimizedOriginal, optimizedCropped, optimizedPreview] = await Promise.all([
+        optimizeImage(originalFile, 800, 800, 90), // Keep original at reasonable size with high quality
+        optimizeImage(croppedFile, 250, 250, 85),   // Optimize cropped version
+        optimizeImage(croppedFile, 50, 50, 80)      // Create optimized preview from cropped image
+      ])
 
       // Generate unique filename prefix with user ID for organization
       const timestamp = Date.now()
@@ -188,11 +176,11 @@ const Uploader: React.FC<UploaderProps> = ({ onSaveComplete }) => {
       const userId = session.user.id
       const filenamePrefix = `${userId}/profile-image/${timestamp}-${randomId}`
 
-      // Upload all three versions
+      // Upload all three optimized versions
       const uploads = await Promise.all([
-        uploadFile(originalFile, `${filenamePrefix}-original.jpg`),
-        uploadFile(croppedFile, `${filenamePrefix}-cropped.jpg`),
-        uploadFile(previewFile, `${filenamePrefix}-preview.jpg`)
+        uploadFile(optimizedOriginal, `${filenamePrefix}-original.jpg`),
+        uploadFile(optimizedCropped, `${filenamePrefix}-cropped.jpg`),
+        uploadFile(optimizedPreview, `${filenamePrefix}-preview.jpg`)
       ])
 
       if (uploads.every(result => result.success)) {
@@ -274,6 +262,43 @@ const Uploader: React.FC<UploaderProps> = ({ onSaveComplete }) => {
     })
   }
 
+  // Helper function to optimize image using the API
+  const optimizeImage = async (file: File, width: number, height: number, quality: number = 85): Promise<File> => {
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('width', width.toString())
+      formData.append('height', height.toString())
+      formData.append('quality', quality.toString())
+
+      const response = await fetch('/api/optimize-image', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to optimize image')
+      }
+
+      const result = await response.json()
+      
+      if (result.success) {
+        console.log(`Image optimized: ${result.originalSize} → ${result.optimizedSize} bytes (${result.compressionRatio}% reduction)`)
+        
+        // Convert base64 back to File
+        const base64Response = await fetch(result.optimizedImage)
+        const blob = await base64Response.blob()
+        return new File([blob], file.name, { type: 'image/jpeg' })
+      } else {
+        throw new Error('Optimization failed')
+      }
+    } catch (error) {
+      console.error('Error optimizing image:', error)
+      // Return original file if optimization fails
+      return file
+    }
+  }
+
   // Helper function to upload file using existing S3 upload logic
   const uploadFile = async (file: File, filename: string): Promise<{success: boolean}> => {
     try {
@@ -343,15 +368,25 @@ const Uploader: React.FC<UploaderProps> = ({ onSaveComplete }) => {
     }
   }
 
-  const handleCrop = () => {
+  const handleCrop = async () => {
     if (cropperRef.current) {
       try {
         // Use the proper API from react-advanced-cropper
         const canvas = cropperRef.current.getCanvas()
 
         if (canvas) {
-          const croppedImage = canvas.toDataURL('image/jpeg', 0.9)
-          setPreviewImage(croppedImage)
+          // Convert canvas to file for optimization
+          const croppedFile = await canvasToFile(canvas, 'preview.jpg')
+          
+          // Optimize the preview image for better UI display
+          const optimizedPreviewFile = await optimizeImage(croppedFile, 250, 250, 85)
+          
+          // Convert optimized file back to data URL for preview
+          const reader = new FileReader()
+          reader.onload = (e) => {
+            setPreviewImage(e.target?.result as string)
+          }
+          reader.readAsDataURL(optimizedPreviewFile)
         } else {
           setPreviewImage(originalImage)
         }

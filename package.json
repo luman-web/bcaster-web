@@ -22,7 +22,8 @@
     "react": "latest",
     "react-advanced-cropper": "^0.20.1",
     "react-dom": "latest",
-    "sass": "^1.70.0"
+    "sass": "^1.70.0",
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
     "@next/swc-darwin-arm64": "^13.5.3",
@@ -30,6 +31,7 @@
     "@types/pg": "^8.10.9",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "@types/sharp": "^0.32.0",
     "typescript": "latest"
   }
 }
