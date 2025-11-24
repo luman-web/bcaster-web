@@ -1,9 +1,10 @@
 import React from 'react'
 import type { MenuProps } from 'antd'
-import { Dropdown, Button } from 'antd'
+import { Flex, Dropdown, Button } from 'antd'
 import Link from 'next/link'
 import { signOut } from 'next-auth/react'
 import UserAvatar from '@/components/UserAvatar'
+import ChatDropdown from '../ChatDropdown'
 
 const Navigation: React.FC = () => {
   const items: MenuProps['items'] = [
@@ -18,13 +19,14 @@ const Navigation: React.FC = () => {
   ]
 
   return (
-    <div>
+    <Flex>
+      <ChatDropdown />
       <Dropdown menu={{ items }} trigger={['click']}>
         <Button size="small" type="text" style={{ color: 'white', padding: '4px', height: '40px' }}>
           <UserAvatar size={30} />
         </Button>
       </Dropdown>
-    </div>
+    </Flex>
   )
 }
 

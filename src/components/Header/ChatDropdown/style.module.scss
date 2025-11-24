@@ -1,0 +1,17 @@
+.chatDropdown {
+  &__trigger {
+    height: 40px !important;
+    width: 40px !important;
+    color: #fff !important;
+    &Icon {
+      font-size: 28px;
+      margin: {
+        top: 2px;
+        left: -2px;
+      }
+    }
+    + sup {
+      pointer-events: none;
+    }
+  }
+}
