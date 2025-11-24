@@ -3,7 +3,7 @@ import type { MenuProps } from 'antd'
 import { Flex, Dropdown, Button } from 'antd'
 import Link from 'next/link'
 import { signOut } from 'next-auth/react'
-import UserAvatar from '@/components/UserAvatar'
+import UserAvatar from '../UserDropdown'
 import ChatDropdown from '../ChatDropdown'
 
 const Navigation: React.FC = () => {
