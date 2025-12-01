@@ -3,6 +3,7 @@ import Link from 'next/link'
 import style from './style.module.scss'
 // components
 import Navigation from './Navigation'
+import NavigationProgress from './NavigationProgress'
 
 export default function () {
   return (
@@ -16,6 +17,7 @@ export default function () {
         </Link>
         <Navigation />
       </div>
+      <NavigationProgress />
     </div>
   )
 }

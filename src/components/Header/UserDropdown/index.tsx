@@ -75,7 +75,6 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
     height: size,
     borderRadius: '50%',
     objectFit: 'cover',
-    backgroundColor: '#f0f0f0',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
