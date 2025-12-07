@@ -1,5 +1,4 @@
 import NextAuth from 'next-auth'
-import { Pool } from 'pg'
 import authConfig from './auth.config'
 // providers
 import SendGrid from 'next-auth/providers/sendgrid'
