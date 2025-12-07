@@ -17,24 +17,24 @@
     "@dicebear/core": "^9.2.4",
     "@types/nprogress": "^0.2.3",
     "antd": "^5.13.2",
-    "next": "latest",
+    "next": "14.2.33",
     "next-auth": "^5.0.0-beta.25",
     "nprogress": "^0.2.0",
     "pg": "^8.11.3",
-    "react": "latest",
+    "react": "18.2.0",
     "react-advanced-cropper": "^0.20.1",
-    "react-dom": "latest",
+    "react-dom": "18.2.0",
     "sass": "^1.70.0",
     "sharp": "^0.34.5",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@next/swc-darwin-arm64": "^13.5.3",
-    "@types/node": "latest",
+    "@types/node": "24.9.1",
     "@types/pg": "^8.10.9",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
+    "@types/react": "18.2.48",
+    "@types/react-dom": "18.2.18",
     "@types/sharp": "^0.32.0",
-    "typescript": "latest"
+    "typescript": "5.3.3"
   }
 }
