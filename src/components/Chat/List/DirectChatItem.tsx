@@ -1,19 +1,19 @@
-import React from 'react';
-import { List, Avatar, Badge, Typography } from 'antd';
-import { UserOutlined } from '@ant-design/icons';
-import styles from './style.module.scss';
+import React from 'react'
+import { List, Avatar, Badge, Typography } from 'antd'
+import { UserOutlined } from '@ant-design/icons'
+import styles from './style.module.scss'
 
-const { Text } = Typography;
+const { Text } = Typography
 
-interface DirectChatItemProps {
-  id: string;
-  name: string;
-  avatar?: string;
-  lastMessage: string;
-  timestamp: string;
-  unreadCount: number;
-  isOnline: boolean;
-  onClick: (chatId: string) => void;
+export interface DirectChatItemProps {
+  id: string
+  name: string
+  avatar?: string
+  lastMessage: string
+  timestamp: string
+  unreadCount: number
+  isOnline: boolean
+  onClick: (chatId: string) => void
 }
 
 const DirectChatItem: React.FC<DirectChatItemProps> = ({
@@ -27,19 +27,16 @@ const DirectChatItem: React.FC<DirectChatItemProps> = ({
   onClick,
 }) => {
   return (
-    <List.Item
-      className={styles.chatItem}
-      onClick={() => onClick(id)}
-    >
+    <List.Item className={styles.chatItem} onClick={() => onClick(id)}>
       <List.Item.Meta
         avatar={
-          <Badge 
-            dot={isOnline} 
+          <Badge
+            dot={isOnline}
             status={isOnline ? 'success' : 'default'}
             offset={[-8, 35]}
           >
-            <Avatar 
-              src={avatar} 
+            <Avatar
+              src={avatar}
               icon={<UserOutlined />}
               size={48}
               className={styles.avatar}
@@ -48,16 +45,12 @@ const DirectChatItem: React.FC<DirectChatItemProps> = ({
         }
         title={
           <div className={styles.chatMeta}>
-            <Text className={styles.chatTitle}>
-              {name}
-            </Text>
+            <Text className={styles.chatTitle}>{name}</Text>
             <div className={styles.chatActions}>
-              <Text className={styles.chatTimestamp}>
-                {timestamp}
-              </Text>
+              <Text className={styles.chatTimestamp}>{timestamp}</Text>
               {unreadCount > 0 && (
-                <Badge 
-                  count={unreadCount} 
+                <Badge
+                  count={unreadCount}
                   size="small"
                   style={{ backgroundColor: '#1890ff' }}
                 />
@@ -65,14 +58,10 @@ const DirectChatItem: React.FC<DirectChatItemProps> = ({
             </div>
           </div>
         }
-        description={
-          <Text className={styles.chatMessage}>
-            {lastMessage}
-          </Text>
-        }
+        description={<Text className={styles.chatMessage}>{lastMessage}</Text>}
       />
     </List.Item>
-  );
-};
+  )
+}
 
-export default DirectChatItem;
+export default DirectChatItem

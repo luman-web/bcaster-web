@@ -48,11 +48,35 @@ CREATE TABLE IF NOT EXISTS verification_token (
     PRIMARY KEY (identifier, token)
 );
 
+-- Conversations table - stores chat conversations
+CREATE TABLE IF NOT EXISTS conversations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    type VARCHAR(50) NOT NULL, -- e.g., 'direct', 'group', 'event'
+    title VARCHAR(255),
+    event_id UUID, -- Optional reference to events table (if exists)
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Messages table - stores individual messages within conversations
+CREATE TABLE IF NOT EXISTS messages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+    sender_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    body TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON accounts("userId");
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions("userId");
 CREATE INDEX IF NOT EXISTS idx_sessions_session_token ON sessions("sessionToken");
 CREATE INDEX IF NOT EXISTS idx_verification_token_token ON verification_token(token);
+CREATE INDEX IF NOT EXISTS idx_conversations_event_id ON conversations(event_id);
+CREATE INDEX IF NOT EXISTS idx_conversations_type ON conversations(type);
+CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON messages(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON messages(sender_id);
+CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
 
 -- Optional: Add a trigger to automatically update updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -64,4 +88,7 @@ END;
 $$ language 'plpgsql';
 
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_conversations_updated_at BEFORE UPDATE ON conversations
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

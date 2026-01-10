@@ -1,19 +1,19 @@
-import React from 'react';
-import { List, Avatar, Badge, Typography } from 'antd';
-import { TeamOutlined } from '@ant-design/icons';
-import styles from './style.module.scss';
+import React from 'react'
+import { List, Avatar, Badge, Typography } from 'antd'
+import { TeamOutlined } from '@ant-design/icons'
+import styles from './style.module.scss'
 
-const { Text } = Typography;
+const { Text } = Typography
 
-interface GroupChatItemProps {
-  id: string;
-  name: string;
-  avatar?: string;
-  lastMessage: string;
-  timestamp: string;
-  unreadCount: number;
-  memberCount: number;
-  onClick: (chatId: string) => void;
+export interface GroupChatItemProps {
+  id: string
+  name: string
+  avatar?: string
+  lastMessage: string
+  timestamp: string
+  unreadCount: number
+  memberCount: number
+  onClick: (chatId: string) => void
 }
 
 const GroupChatItem: React.FC<GroupChatItemProps> = ({
@@ -27,14 +27,11 @@ const GroupChatItem: React.FC<GroupChatItemProps> = ({
   onClick,
 }) => {
   return (
-    <List.Item
-      className={styles.chatItem}
-      onClick={() => onClick(id)}
-    >
+    <List.Item className={styles.chatItem} onClick={() => onClick(id)}>
       <List.Item.Meta
         avatar={
-          <Avatar 
-            src={avatar} 
+          <Avatar
+            src={avatar}
             icon={<TeamOutlined />}
             size={48}
             className={styles.avatar}
@@ -42,16 +39,12 @@ const GroupChatItem: React.FC<GroupChatItemProps> = ({
         }
         title={
           <div className={styles.chatMeta}>
-            <Text className={styles.chatTitle}>
-              {name}
-            </Text>
+            <Text className={styles.chatTitle}>{name}</Text>
             <div className={styles.chatActions}>
-              <Text className={styles.chatTimestamp}>
-                {timestamp}
-              </Text>
+              <Text className={styles.chatTimestamp}>{timestamp}</Text>
               {unreadCount > 0 && (
-                <Badge 
-                  count={unreadCount} 
+                <Badge
+                  count={unreadCount}
                   size="small"
                   style={{ backgroundColor: '#1890ff' }}
                 />
@@ -61,9 +54,7 @@ const GroupChatItem: React.FC<GroupChatItemProps> = ({
         }
         description={
           <div>
-            <Text className={styles.chatMessage}>
-              {lastMessage}
-            </Text>
+            <Text className={styles.chatMessage}>{lastMessage}</Text>
             <Text className={styles.chatDetails}>
               <TeamOutlined /> {memberCount} members
             </Text>
@@ -71,7 +62,7 @@ const GroupChatItem: React.FC<GroupChatItemProps> = ({
         }
       />
     </List.Item>
-  );
-};
+  )
+}
 
-export default GroupChatItem;
+export default GroupChatItem

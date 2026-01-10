@@ -1,19 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Button, Badge } from 'antd'
 // components
-import Chat from '../../Chat'
+import SystemEventsList from '@/components/SystemEventsList'
 // icons
-import { WechatOutlined } from '@ant-design/icons'
+import { BellOutlined } from '@ant-design/icons'
 // styles
 import style from './style.module.scss'
 
 const Navigation: React.FC = () => {
-  const messagesCount = 5
+  const systemEventsCount = 0
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLDivElement>(null)
 
-  const handleChatClick = () => {
+  const handleSystemEventsClick = () => {
     setIsDropdownOpen(!isDropdownOpen)
   }
 
@@ -37,22 +37,22 @@ const Navigation: React.FC = () => {
   }, [isDropdownOpen])
 
   return (
-    <div className={style.chatDropdown}>
+    <div className={style.systemEventsDropdown}>
       <div ref={buttonRef}>
         <Badge 
-          count={messagesCount}
+          count={systemEventsCount}
           overflowCount={99}
-          offset={[-21, 30]}
+          offset={[-11, 13]}
           size="small"
-          className={style.chatDropdown__messagesCount}
+          className={style.systemEventsDropdown__systemEventsCount}
         >
           <Button
             size="small"
             type="text"
-            className={style.chatDropdown__trigger}
-            onClick={handleChatClick}
+            className={style.systemEventsDropdown__trigger}
+            onClick={handleSystemEventsClick}
           >
-            <WechatOutlined className={style.chatDropdown__triggerIcon} />
+            <BellOutlined className={style.systemEventsDropdown__triggerIcon} />
           </Button>
         </Badge>
       </div>
@@ -60,9 +60,9 @@ const Navigation: React.FC = () => {
       {isDropdownOpen && (
         <div 
           ref={dropdownRef}
-          className={style.chatDropdown__content}
+          className={style.systemEventsDropdown__content}
         >
-          <Chat />
+          <SystemEventsList />
         </div>
       )}
     </div>
