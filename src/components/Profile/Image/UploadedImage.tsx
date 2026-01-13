@@ -6,8 +6,8 @@ import style from './styles.module.scss'
 interface UploadedImageProps {
   imageUrl: string
   originalImageUrl?: string
-  onDelete: () => void
-  onSelectImage: () => void
+  onDelete?: () => void
+  onSelectImage?: () => void
   isDeleting: boolean
 }
 
@@ -36,27 +36,31 @@ const UploadedImage: React.FC<UploadedImageProps> = ({
         }}
       />
       {/* Trash icon in top-right corner */}
-      <Popconfirm
-        title="Удалить фото профиля?"
-        onConfirm={onDelete}
-        okText="Да"
-        cancelText="Отмена"
-        disabled={isDeleting}
-      >
-        <Button
-          type="text"
-          danger
-          icon={<DeleteOutlined />}
-          size="small"
+      {onDelete && (
+        <Popconfirm
+          title="Удалить фото профиля?"
+          onConfirm={onDelete}
+          okText="Да"
+          cancelText="Отмена"
           disabled={isDeleting}
-          className={style.profileImage}
-        />
-      </Popconfirm>
-      <div className={style.selectImage}>
-        <Button size="small" style={{ width: '100%' }} onClick={onSelectImage}>
-          <span>Выбрать фото</span>
-        </Button>
-      </div>
+        >
+          <Button
+            type="text"
+            danger
+            icon={<DeleteOutlined />}
+            size="small"
+            disabled={isDeleting}
+            className={style.profileImage}
+          />
+        </Popconfirm>
+      )}
+      {onSelectImage && (
+        <div className={style.selectImage}>
+          <Button size="small" style={{ width: '100%' }} onClick={onSelectImage}>
+            <span>Выбрать фото</span>
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

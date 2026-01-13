@@ -1,6 +1,6 @@
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
-import ProfilePreview from '@/components/ProfilePreview'
+import Profile from '@/components/Profile'
 
 interface Props {
   params: {
@@ -17,7 +17,5 @@ export default async function AnotherUserProfile({ params }: Props) {
     redirect('/profile')
   }
 
-  console.log(session)
-
-  return <ProfilePreview userId={id} />
+  return <Profile userId={id} />
 }

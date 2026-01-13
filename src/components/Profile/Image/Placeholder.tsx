@@ -5,7 +5,7 @@ import { UserOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
 
 type Props = {
-  selectImage: Function
+  selectImage?: Function
 }
 
 export default function Placehoder(props: Props) {
@@ -13,11 +13,13 @@ export default function Placehoder(props: Props) {
     <div className={styles.placeholder}>
       <UserOutlined />
 
-      <div className={styles.selectImage}>
-        <Button size="small" style={{ width: '100%' }} onClick={() => props.selectImage(true)}>
-          <span>Выбрать фото</span>
-        </Button>
-      </div>
+      {props.selectImage && (
+        <div className={styles.selectImage}>
+          <Button size="small" style={{ width: '100%' }} onClick={() => props.selectImage?.(true)}>
+            <span>Выбрать фото</span>
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

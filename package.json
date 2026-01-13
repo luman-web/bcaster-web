@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "migrate": "psql $WALLTAPP_DB_URL -f schema.sql"
   },
   "dependencies": {
     "@ant-design/nextjs-registry": "^1.0.0",
@@ -24,6 +25,7 @@
     "react": "18.2.0",
     "react-advanced-cropper": "^0.20.1",
     "react-dom": "18.2.0",
+    "reconnecting-websocket": "^4.4.0",
     "sass": "^1.70.0",
     "sharp": "^0.34.5",
     "zustand": "^5.0.8"

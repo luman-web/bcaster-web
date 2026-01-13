@@ -18,7 +18,7 @@ const SelectImage: React.FC<Props> = (props: Props) => {
         open={props.isOpened}
         onCancel={() => props.close()}
         footer={null}
-        destroyOnClose={true}
+        destroyOnHidden={true}
         keyboard={true}
         focusTriggerAfterClose={false}
       >

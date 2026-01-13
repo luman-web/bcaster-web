@@ -12,19 +12,25 @@ import { Spin } from 'antd'
 import { LoadingOutlined } from '@ant-design/icons'
 import Placeholder from './Placeholder'
 
-function ProfileImageContent() {
+interface ProfileImageContentProps {
+  userId?: string
+}
+
+function ProfileImageContent({ userId }: ProfileImageContentProps) {
   const { data: session } = useSession()
   const [selectImageModalShown, showSelectImageModal] = useState(false)
   const [userImageUrl, setUserImageUrl] = useState<string | null>(null)
   const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isDeleting, setIsDeleting] = useState(false)
+  const isCurrentUser = !userId || userId === session?.user?.id
 
   const fetchUserImage = async () => {
     if (!session?.user?.id) return
     
     try {
-      const response = await fetch('/api/user')
+      const url = isCurrentUser ? '/api/user' : `/api/user/${userId}`
+      const response = await fetch(url)
       if (response.ok) {
         const userData = await response.json()
         setUserImageUrl(userData.image_cropped || null)
@@ -150,25 +156,31 @@ function ProfileImageContent() {
         <UploadedImage
           imageUrl={userImageUrl}
           originalImageUrl={originalImageUrl || undefined}
-          onDelete={handleDeleteImage}
-          onSelectImage={handleSelectImageClick}
+          onDelete={isCurrentUser ? handleDeleteImage : undefined}
+          onSelectImage={isCurrentUser ? handleSelectImageClick : undefined}
           isDeleting={isDeleting}
         />
       ) : (
-        <Placeholder selectImage={handleSelectImageClick} />
+        <Placeholder selectImage={isCurrentUser ? handleSelectImageClick : undefined} />
       )}
-      <SelectImageModal
-        isOpened={selectImageModalShown}
-        close={handleModalClose}
-      />
+      {isCurrentUser && (
+        <SelectImageModal
+          isOpened={selectImageModalShown}
+          close={handleModalClose}
+        />
+      )}
     </div>
   )
 }
 
-export default function ProfileImage() {
+interface ProfileImageProps {
+  userId?: string
+}
+
+export default function ProfileImage({ userId }: ProfileImageProps) {
   return (
     <SessionProvider>
-      <ProfileImageContent />
+      <ProfileImageContent userId={userId} />
     </SessionProvider>
   )
 }

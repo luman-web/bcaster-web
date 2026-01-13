@@ -48,6 +48,18 @@ CREATE TABLE IF NOT EXISTS verification_token (
     PRIMARY KEY (identifier, token)
 );
 
+-- User edges table - stores relationships between users (followers, friends, friend requests)
+CREATE TABLE IF NOT EXISTS user_edges (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    requester_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- User who initiated the request/action
+    receiver_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- User receiving the request
+    status VARCHAR(50) NOT NULL DEFAULT 'pending', -- 'pending' (follower), 'approved' (friend), 'rejected', 'blocked'
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(requester_id, receiver_id), -- Prevent duplicate relationships
+    CONSTRAINT no_self_relationship CHECK (requester_id != receiver_id)
+);
+
 -- Conversations table - stores chat conversations
 CREATE TABLE IF NOT EXISTS conversations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -72,6 +84,10 @@ CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON accounts("userId");
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions("userId");
 CREATE INDEX IF NOT EXISTS idx_sessions_session_token ON sessions("sessionToken");
 CREATE INDEX IF NOT EXISTS idx_verification_token_token ON verification_token(token);
+CREATE INDEX IF NOT EXISTS idx_user_edges_requester_id ON user_edges(requester_id);
+CREATE INDEX IF NOT EXISTS idx_user_edges_receiver_id ON user_edges(receiver_id);
+CREATE INDEX IF NOT EXISTS idx_user_edges_status ON user_edges(status);
+CREATE INDEX IF NOT EXISTS idx_user_edges_requester_receiver ON user_edges(requester_id, receiver_id, status);
 CREATE INDEX IF NOT EXISTS idx_conversations_event_id ON conversations(event_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_type ON conversations(type);
 CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON messages(conversation_id);
@@ -91,4 +107,7 @@ CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_conversations_updated_at BEFORE UPDATE ON conversations
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_user_edges_updated_at BEFORE UPDATE ON user_edges
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

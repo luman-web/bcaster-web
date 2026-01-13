@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Button, Badge } from 'antd'
+import { useWebSocket } from '@/lib/useWebSocket'
 // components
 import SystemEventsList from '@/components/SystemEventsList'
 // icons
@@ -12,6 +13,18 @@ const Navigation: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLDivElement>(null)
+  // const { send, onMessage, isConnected } = useWebSocket()
+
+  // useEffect(() => {
+  //   // Listen for messages
+  //   const unsubscribe = onMessage((data) => {
+  //     if (data.type === 'pong') {
+  //       console.log(data, '<<<<')
+  //     }
+  //   })
+
+  //   return unsubscribe
+  // }, [onMessage])
 
   const handleSystemEventsClick = () => {
     setIsDropdownOpen(!isDropdownOpen)
