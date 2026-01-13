@@ -9,6 +9,7 @@ export class WebSocketClient {
   private connectionHandlers: (() => void)[] = []
   private disconnectionHandlers: (() => void)[] = []
   private errorHandlers: ((error: ErrorEvent) => void)[] = []
+  private pendingUserId: string | null = null
 
   constructor(url: string) {
     this.url = url
@@ -34,6 +35,14 @@ export class WebSocketClient {
 
         this.ws.onopen = () => {
           this.isConnecting = false
+          // Send pending userId if we have one
+          if (this.pendingUserId) {
+            console.log('📤 Sending pending userId after reconnect:', this.pendingUserId)
+            this.send({
+              type: 'authenticate',
+              payload: { userId: this.pendingUserId }
+            })
+          }
           this.connectionHandlers.forEach((handler) => handler())
           resolve()
         }
@@ -43,7 +52,6 @@ export class WebSocketClient {
             const data = JSON.parse(event.data)
             this.messageHandlers.forEach((handler) => handler(data))
           } catch (e) {
-            console.log('Received non-JSON message:', event.data)
             this.messageHandlers.forEach((handler) => handler(event.data))
           }
         }
@@ -65,11 +73,21 @@ export class WebSocketClient {
     })
   }
 
+  // Send user ID to server to identify this connection
+  setUserId(userId: string): void {
+    this.pendingUserId = userId
+    
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.send({
+        type: 'authenticate',
+        payload: { userId }
+      })
+    }
+  }
+
   send(data: any): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(data))
-    } else {
-      console.warn('WebSocket is not connected')
     }
   }
 

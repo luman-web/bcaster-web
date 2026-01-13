@@ -26,6 +26,10 @@ export function useWebSocket() {
     wsClient.send(data)
   }, [])
 
+  const setUserId = useCallback((userId: string) => {
+    wsClient.setUserId(userId)
+  }, [])
+
   useEffect(() => {
     connect()
 
@@ -36,6 +40,7 @@ export function useWebSocket() {
 
   return {
     send,
+    setUserId,
     onMessage: wsClient.onMessage.bind(wsClient),
     onConnect: wsClient.onConnect.bind(wsClient),
     onDisconnect: wsClient.onDisconnect.bind(wsClient),

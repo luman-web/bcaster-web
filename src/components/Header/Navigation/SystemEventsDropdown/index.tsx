@@ -9,31 +9,66 @@ import { BellOutlined } from '@ant-design/icons'
 import style from './style.module.scss'
 
 const Navigation: React.FC = () => {
-  const systemEventsCount = 0
+  const [systemEventsCount, setSystemEventsCount] = useState(0)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLDivElement>(null)
-  // const { send, onMessage, isConnected } = useWebSocket()
+  const { onMessage } = useWebSocket()
+  const hasMarkedAsReadRef = useRef(false)
 
-  // useEffect(() => {
-  //   // Listen for messages
-  //   const unsubscribe = onMessage((data) => {
-  //     if (data.type === 'pong') {
-  //       console.log(data, '<<<<')
-  //     }
-  //   })
+  // Fetch system events count
+  const fetchEventsCount = async () => {
+    try {
+      const response = await fetch('/api/system-events')
+      if (response.ok) {
+        const data = await response.json()
+        setSystemEventsCount(data.unread_count)
+      }
+    } catch (error) {
+      console.error('Error fetching system events count:', error)
+    }
+  }
 
-  //   return unsubscribe
-  // }, [onMessage])
+  // Initial fetch
+  useEffect(() => {
+    fetchEventsCount()
+  }, [])
+
+  // Listen for WebSocket messages about new events
+  useEffect(() => {
+    const unsubscribe = onMessage((data) => {
+      if (data.type === 'friend.request' || data.eventType === 'friend.request') {
+        // Increment count and play sound/notification
+        setSystemEventsCount(prev => prev + 1)
+      }
+    })
+
+    return unsubscribe
+  }, [onMessage])
 
   const handleSystemEventsClick = () => {
-    setIsDropdownOpen(!isDropdownOpen)
+    const newOpenState = !isDropdownOpen
+    setIsDropdownOpen(newOpenState)
+    
+    if (newOpenState) {
+      // Reset the flag when opening so we can mark as read
+      hasMarkedAsReadRef.current = false
+    }
+  }
+
+  const handleOnDropdownOpen = () => {
+    if (!hasMarkedAsReadRef.current) {
+      hasMarkedAsReadRef.current = true
+      // Mark as read will happen in SystemEventsList
+    }
   }
 
   const handleClickOutside = (event: MouseEvent) => {
     if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
         buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
       setIsDropdownOpen(false)
+      // Refresh count when dropdown closes
+      fetchEventsCount()
     }
   }
 
@@ -75,7 +110,7 @@ const Navigation: React.FC = () => {
           ref={dropdownRef}
           className={style.systemEventsDropdown__content}
         >
-          <SystemEventsList />
+          <SystemEventsList onOpen={handleOnDropdownOpen} />
         </div>
       )}
     </div>
