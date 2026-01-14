@@ -19,7 +19,6 @@ interface SystemEvent {
 const SystemEventsList: React.FC<{ onOpen?: () => void }> = ({ onOpen }) => {
   const [events, setEvents] = useState<SystemEvent[]>([])
   const [loading, setLoading] = useState(true)
-  const { onMessage } = useWebSocket()
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Mark all unread events as read when dropdown opens
@@ -61,34 +60,6 @@ const SystemEventsList: React.FC<{ onOpen?: () => void }> = ({ onOpen }) => {
       markUnreadAsRead()
     }
   }, [onOpen, markUnreadAsRead])
-
-  // Listen for real-time WebSocket messages
-  useEffect(() => {
-    const unsubscribe = onMessage((data) => {
-      if (data.eventType === 'friend.request' || data.type === 'friend.request') {
-        // Add new event to the top of the list
-        const newEvent: SystemEvent = {
-          id: Math.random().toString(36),
-          event_type: 'friend.request',
-          actor_id: data.payload?.requester_id || data.data?.requester_id,
-          related_id: '',
-          data: data.payload || data.data,
-          is_read: false,
-          created_at: new Date().toISOString()
-        }
-        setEvents(prev => [newEvent, ...prev])
-      }
-    })
-
-    return unsubscribe
-  }, [onMessage])
-
-  // Mark event as viewed using Intersection Observer
-  useEffect(() => {
-    return () => {
-      // Cleanup
-    }
-  }, [])
 
   const markEventsAsRead = async (eventIds: string[]) => {
     try {

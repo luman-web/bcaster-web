@@ -79,8 +79,8 @@ CREATE TABLE IF NOT EXISTS messages (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- System events table - stores notifications/events for users
-CREATE TABLE IF NOT EXISTS system_events (
+-- User events table - stores notifications/events for users
+CREATE TABLE IF NOT EXISTS user_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     event_type VARCHAR(50) NOT NULL, -- e.g., 'friend.request', 'friend.approved'
@@ -106,9 +106,9 @@ CREATE INDEX IF NOT EXISTS idx_conversations_type ON conversations(type);
 CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON messages(conversation_id);
 CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON messages(sender_id);
 CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
-CREATE INDEX IF NOT EXISTS idx_system_events_user_id ON system_events(user_id);
-CREATE INDEX IF NOT EXISTS idx_system_events_user_id_is_read ON system_events(user_id, is_read);
-CREATE INDEX IF NOT EXISTS idx_system_events_created_at ON system_events(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_user_events_user_id ON user_events(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_events_user_id_is_read ON user_events(user_id, is_read);
+CREATE INDEX IF NOT EXISTS idx_user_events_created_at ON user_events(created_at DESC);
 
 -- Optional: Add a trigger to automatically update updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()

@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    // Fetch system events
+    // Fetch user events
     const result = await pool.query(
       `SELECT 
         id, 
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
         data,
         is_read, 
         created_at
-       FROM system_events 
+       FROM user_events 
        WHERE user_id = $1 
        ORDER BY created_at DESC 
        LIMIT $2 OFFSET $3`,
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch count of unread events
     const countResult = await pool.query(
-      'SELECT COUNT(*) as unread_count FROM system_events WHERE user_id = $1 AND is_read = FALSE',
+      'SELECT COUNT(*) as unread_count FROM user_events WHERE user_id = $1 AND is_read = FALSE',
       [session.user.id]
     )
 
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
 
     // Mark events as read
     const placeholders = event_ids.map((_, i) => `$${i + 2}`).join(',')
-    const query = `UPDATE system_events 
+    const query = `UPDATE user_events 
                    SET is_read = TRUE 
                    WHERE user_id = $1 AND id IN (${placeholders})
                    RETURNING id`

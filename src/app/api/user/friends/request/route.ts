@@ -1,5 +1,6 @@
 import { auth } from '@/auth'
 import pool from '@/lib/db'
+import { sendWebSocketNotification } from '@/lib/sendWebSocketNotification'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
@@ -8,7 +9,7 @@ export async function POST(request: NextRequest) {
     
     if (!session?.user?.id) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Требуется авторизация' },
         { status: 401 }
       )
     }
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     if (!receiver_id) {
       return NextResponse.json(
-        { error: 'Receiver ID is required' },
+        { error: 'ID получателя не указан' },
         { status: 400 }
       )
     }
@@ -26,23 +27,39 @@ export async function POST(request: NextRequest) {
 
     if (requester_id === receiver_id) {
       return NextResponse.json(
-        { error: 'Cannot send friend request to yourself' },
+        { error: 'Невозможно послать запрос себе же' },
         { status: 400 }
       )
     }
 
-    // Check if user exists
+    // Check if user exists and get requester image
     const userCheck = await pool.query(
       'SELECT id FROM users WHERE id = $1',
       [receiver_id]
     )
 
+    // Get requester's image
+    const requesterData = await pool.query(
+      'SELECT name, image_preview FROM users WHERE id = $1',
+      [requester_id]
+    )
+
     if (userCheck.rows.length === 0) {
       return NextResponse.json(
-        { error: 'User not found' },
+        { error: 'Пользователь не найден' },
         { status: 404 }
       )
     }
+
+    if (requesterData.rows.length === 0) {
+      return NextResponse.json(
+        { error: 'Контакт не был найден' },
+        { status: 404 }
+      )
+    }
+
+    const requesterImage = requesterData.rows[0].image_preview
+    const requesterName = requesterData.rows[0].name
 
     // Check if edge already exists
     const existingEdge = await pool.query(
@@ -53,7 +70,7 @@ export async function POST(request: NextRequest) {
     if (existingEdge.rows.length > 0) {
       const existingStatus = existingEdge.rows[0].status
       return NextResponse.json(
-        { error: `Friend request already exists with status: ${existingStatus}` },
+        { error: `Запрос в друзья уже существует в статусе: ${existingStatus}` },
         { status: 400 }
       )
     }
@@ -68,7 +85,7 @@ export async function POST(request: NextRequest) {
 
     // Create system event for receiver
     await pool.query(
-      `INSERT INTO system_events (user_id, event_type, actor_id, related_id, data, is_read)
+      `INSERT INTO user_events (user_id, event_type, actor_id, related_id, data, is_read)
        VALUES ($1, $2, $3, $4, $5, $6)`,
       [
         receiver_id,
@@ -77,45 +94,31 @@ export async function POST(request: NextRequest) {
         edgeId,
         JSON.stringify({
           requester_id,
-          requester_name: session.user.name,
-          requester_image: session.user.image,
+          requester_name: requesterName,
+          requester_image: requesterImage,
         }),
         false
       ]
     )
 
-    // Send WebSocket message to receiver
-    try {
-      const wsResponse = await fetch('http://localhost:3001/api/notify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: receiver_id,
-          eventType: 'friend.request',
-          data: {
-            requester_id,
-            requester_name: session.user.name,
-            requester_image: session.user.image,
-          }
-        })
-      })
+    console.log('send notification to requester', receiver_id)
 
-      if (!wsResponse.ok) {
-        console.error('Failed to send WebSocket notification')
-      }
-    } catch (error) {
-      console.error('Error sending WebSocket notification:', error)
-    }
+    // Send WebSocket notification
+    await sendWebSocketNotification({
+      userId: receiver_id,
+      eventType: `user_event.${receiver_id}`,
+      data: {}
+    })
 
     return NextResponse.json({
       id: result.rows[0].id,
       status: result.rows[0].status,
-      message: 'Friend request sent successfully'
+      message: 'Запроас в друзья успешно отправлен'
     })
   } catch (error) {
-    console.error('Error sending friend request:', error)
+    console.error('Ошибка запроса в друзья:', error)
     return NextResponse.json(
-      { error: 'Failed to send friend request' },
+      { error: 'Не удалось отправить запрос в друзья' },
       { status: 500 }
     )
   }

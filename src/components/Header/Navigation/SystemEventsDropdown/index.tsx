@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Button, Badge } from 'antd'
+import { useSession } from 'next-auth/react'
 import { useWebSocket } from '@/lib/useWebSocket'
 // components
 import SystemEventsList from '@/components/SystemEventsList'
@@ -13,6 +14,8 @@ const Navigation: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLDivElement>(null)
+  const { data: session } = useSession()
+  const userId = session?.user.id
   const { onMessage } = useWebSocket()
   const hasMarkedAsReadRef = useRef(false)
 
@@ -37,7 +40,7 @@ const Navigation: React.FC = () => {
   // Listen for WebSocket messages about new events
   useEffect(() => {
     const unsubscribe = onMessage((data) => {
-      if (data.type === 'friend.request' || data.eventType === 'friend.request') {
+      if (data.type === `user_event.${userId}` || data.eventType === `user_event.${userId}`) {
         // Increment count and play sound/notification
         setSystemEventsCount(prev => prev + 1)
       }

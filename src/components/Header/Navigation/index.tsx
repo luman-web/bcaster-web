@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { SessionProvider, useSession } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 import { Button, Space } from 'antd'
 import { LoadingOutlined } from '@ant-design/icons'
 
@@ -9,15 +9,11 @@ import { LoadingOutlined } from '@ant-design/icons'
 import Guest from './Guest'
 import User from './User'
 
-export default function () {
-  return (
-    <SessionProvider>
-      <Navigation />
-    </SessionProvider>
-  )
+export default function Navigation() {
+  return <NavigationContent />
 }
 
-const Navigation: React.FC = () => {
+const NavigationContent: React.FC = () => {
   const { status } = useSession()
 
   if (status === 'loading')

@@ -18,9 +18,11 @@ export class WebSocketClient {
   connect(): Promise<void> {
     // Prevent multiple simultaneous connection attempts
     if (this.isConnecting || (this.ws && this.ws.readyState === WebSocket.OPEN)) {
+      // console.log('🔌 WebSocket already connected or connecting')
       return Promise.resolve()
     }
 
+    // console.log('🔌 WebSocket connecting to:', this.url)
     this.isConnecting = true
 
     return new Promise((resolve, reject) => {
@@ -35,9 +37,10 @@ export class WebSocketClient {
 
         this.ws.onopen = () => {
           this.isConnecting = false
+          // console.log('✅ WebSocket connected')
           // Send pending userId if we have one
           if (this.pendingUserId) {
-            console.log('📤 Sending pending userId after reconnect:', this.pendingUserId)
+            // console.log('📤 Sending pending userId after reconnect:', this.pendingUserId)
             this.send({
               type: 'authenticate',
               payload: { userId: this.pendingUserId }
@@ -48,6 +51,7 @@ export class WebSocketClient {
         }
 
         this.ws.onmessage = (event) => {
+          // console.log('📨 WebSocket message received:', event.data)
           try {
             const data = JSON.parse(event.data)
             this.messageHandlers.forEach((handler) => handler(data))
@@ -58,16 +62,18 @@ export class WebSocketClient {
 
         this.ws.onclose = () => {
           this.isConnecting = false
+          // console.log('❌ WebSocket disconnected')
           this.disconnectionHandlers.forEach((handler) => handler())
         }
 
         this.ws.onerror = (error: ErrorEvent) => {
           this.isConnecting = false
-          console.error('WebSocket error:', error)
+          console.error('⚠️ WebSocket error:', error)
           this.errorHandlers.forEach((handler) => handler(error))
         }
       } catch (error) {
         this.isConnecting = false
+        console.error('⚠️ WebSocket connection error:', error)
         reject(error)
       }
     })
@@ -75,19 +81,26 @@ export class WebSocketClient {
 
   // Send user ID to server to identify this connection
   setUserId(userId: string): void {
+    // console.log('🔐 Setting userId:', userId)
     this.pendingUserId = userId
     
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      // console.log('📤 Sending userId immediately (connection active)')
       this.send({
         type: 'authenticate',
         payload: { userId }
       })
+    } else {
+      // console.log('⏳ userId pending until connection established')
     }
   }
 
   send(data: any): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      // console.log('📨 Sending:', data)
       this.ws.send(JSON.stringify(data))
+    } else {
+      console.warn('⚠️ Cannot send - WebSocket not connected')
     }
   }
 
@@ -121,14 +134,17 @@ export class WebSocketClient {
 
   disconnect(): void {
     if (this.ws) {
+      // console.log('🔌 Disconnecting WebSocket')
       this.ws.close()
       this.ws = null
     }
   }
 
   isConnected(): boolean {
-    return this.ws !== null && this.ws.readyState === WebSocket.OPEN
+    const connected = this.ws !== null && this.ws.readyState === WebSocket.OPEN
+    // console.log('🔍 WebSocket connection status:', connected)
+    return connected
   }
 }
 
-export const wsClient = new WebSocketClient('ws://localhost:3002')
+export const wsClient = new WebSocketClient(process.env.WS_URL || 'ws://localhost:3002')
