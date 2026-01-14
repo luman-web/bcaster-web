@@ -120,8 +120,8 @@ const Uploader: React.FC<UploaderProps> = ({ onSaveComplete }) => {
   }
 
   const saveCropped = async () => {
-    if (!cropperRef.current || !originalImage) {
-      console.error('No cropper or original image available')
+    if (!previewImage || !originalImage) {
+      console.error('No preview image or original image available')
       return
     }
 
@@ -150,18 +150,11 @@ const Uploader: React.FC<UploaderProps> = ({ onSaveComplete }) => {
         }
       }
 
-      // Get the cropped canvas from the cropper
-      const croppedCanvas = cropperRef.current.getCanvas()
-      if (!croppedCanvas) {
-        console.error('Failed to get canvas from cropper')
-        return
-      }
-
       // Convert original image to file
       const originalFile = await dataURLToFile(originalImage, 'original.jpg')
       
-      // Convert cropped canvas to file
-      const croppedFile = await canvasToFile(croppedCanvas, 'cropped.jpg')
+      // Convert preview (already cropped) to file
+      const croppedFile = await dataURLToFile(previewImage, 'cropped.jpg')
       
       // Optimize images using the API
       const [optimizedOriginal, optimizedCropped, optimizedPreview] = await Promise.all([
@@ -299,37 +292,29 @@ const Uploader: React.FC<UploaderProps> = ({ onSaveComplete }) => {
     }
   }
 
-  // Helper function to upload file using existing S3 upload logic
+  // Helper function to upload file via API (server-side upload to avoid CORS)
   const uploadFile = async (file: File, filename: string): Promise<{success: boolean}> => {
     try {
-      // Get signed URL from API
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('filename', filename)
+
       const res = await fetch('/api/s3-upload', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          filename: filename,
-          fileType: file.type,
-        }),
+        body: formData,
       })
 
       if (!res.ok) {
-        throw new Error('Failed to get signed URL')
+        throw new Error('Failed to upload file')
       }
 
-      const { signedUrl } = await res.json()
+      const result = await res.json()
 
-      // Upload file to S3
-      const upload = await fetch(signedUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': file.type },
-        body: file,
-      })
-
-      if (upload.ok) {
+      if (result.success) {
         console.log(`Upload successful: ${filename}`)
         return { success: true }
       } else {
-        console.error(`Upload failed: ${filename}`)
+        console.error(`Upload failed: ${filename}`, result.error)
         return { success: false }
       }
     } catch (error) {

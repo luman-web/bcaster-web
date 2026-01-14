@@ -14,6 +14,9 @@ interface ProfileProps {
 
 export default function Profile({ userId, friendStatus = null }: ProfileProps) {
   const { data: session } = useSession()
+
+  if (!userId) userId = session?.user?.id
+
   const isCurrentUser = !userId || userId === session?.user?.id
 
   return (

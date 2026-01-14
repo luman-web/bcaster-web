@@ -3,7 +3,7 @@ import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3'
 
 const s3 = new S3Client({
   region: 'ru-1', // Use Selectel's region
-  endpoint: process.env.S3_BUCKET_ENDPOINT,
+  endpoint: `https://${process.env.S3_BUCKET_ENDPOINT}`,
   forcePathStyle: true, // Required for S3-compatible services like Selectel
   credentials: {
     accessKeyId: process.env.S3_ACCESS_KEY!,
