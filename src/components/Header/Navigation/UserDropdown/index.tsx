@@ -13,9 +13,8 @@ import type { MenuProps } from 'antd'
 
 const UserAvatar: React.FC = () => {
   const size = 32
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const userImageUrl = useUserProfileImageThumbnail()
-  const [isLoading, setIsLoading] = useState(true)
   const [generatedAvatar, setGeneratedAvatar] = useState<string>('')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -55,17 +54,15 @@ const UserAvatar: React.FC = () => {
     },
   ]
 
-  // Update loading state when image URL is fetched
+  // Update loading state based on session status
   useEffect(() => {
-    if (userImageUrl !== null) {
-      setIsLoading(false)
-    }
+    setGeneratedAvatar('')
   }, [userImageUrl])
 
   // Generate avatar based on user ID
   useEffect(() => {
     const generateAvatar = async () => {
-      if (session?.user?.id && !userImageUrl && !isLoading) {
+      if (session?.user?.id && !userImageUrl && status === 'authenticated') {
         try {
           const dataUri = await generateAvatarDataUri(session.user.id)
           setGeneratedAvatar(dataUri)
@@ -76,7 +73,7 @@ const UserAvatar: React.FC = () => {
     }
 
     generateAvatar()
-  }, [session?.user?.id, userImageUrl, isLoading, size])
+  }, [session?.user?.id, userImageUrl, status, size])
 
   const avatarStyle: React.CSSProperties = {
     width: size,
@@ -117,14 +114,6 @@ const UserAvatar: React.FC = () => {
   )
 
   const renderAvatarContent = () => {
-    if (isLoading) {
-      return (
-        <div style={{ color: '#f0f0f0' }}>
-          <LoadingOutlined />
-        </div>
-      )
-    }
-
     if (userImageUrl) {
       return (
         <img
@@ -144,20 +133,13 @@ const UserAvatar: React.FC = () => {
         />
       )
     }
-  }
 
-  if (isLoading) {
-    <div className={style.userDropdown}>
-      <div ref={buttonRef}>
-        <Button
-          size="small"
-          type="text"
-          className={style.userDropdown__trigger}
-        >
-          {renderAvatarContent()}
-        </Button>
+    // Loading or no image yet - show a placeholder
+    return (
+      <div style={{ color: '#f0f0f0' }}>
+        <LoadingOutlined />
       </div>
-    </div>
+    )
   }
 
   return (
