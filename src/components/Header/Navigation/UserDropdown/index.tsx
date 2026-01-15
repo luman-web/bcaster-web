@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { createAvatar } from '@dicebear/core'
 import { Button } from 'antd'
 import Link from 'next/link'
 import { signOut } from 'next-auth/react'
-import { initials } from '@dicebear/collection'
+import { LoadingOutlined } from '@ant-design/icons'
+import { generateAvatarDataUri } from '@/lib/generateAvatar'
 // styles
 import style from './style.module.scss'
 // types
@@ -83,17 +83,7 @@ const UserAvatar: React.FC = () => {
     const generateAvatar = async () => {
       if (session?.user?.id && !userImageUrl && !isLoading) {
         try {
-          const avatar = createAvatar(initials, {
-            seed: session.user.id,
-            size: size,
-            backgroundColor: ['b6e3f4', '818cf8', 'fbbf24', 'f87171', '34d399', 'a78bfa'],
-            backgroundType: ['solid'],
-            fontFamily: ['Arial'],
-            fontWeight: 600,
-            textColor: ['ffffff'],
-          })
-          
-          const dataUri = await avatar.toDataUri()
+          const dataUri = await generateAvatarDataUri(session.user.id)
           setGeneratedAvatar(dataUri)
         } catch (error) {
           console.error('Error generating avatar:', error)
@@ -113,6 +103,8 @@ const UserAvatar: React.FC = () => {
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: '-4px',
+    border: '1px solid #999',
+    background: 'white'
   }
 
   const renderDropdown = () => (
@@ -143,13 +135,9 @@ const UserAvatar: React.FC = () => {
   const renderAvatarContent = () => {
     if (isLoading) {
       return (
-        <div 
-          className={style.loading}
-          style={{
-            ...avatarStyle,
-            backgroundColor: '#f0f0f0'
-          }}
-        />
+        <div style={{ color: '#f0f0f0' }}>
+          <LoadingOutlined />
+        </div>
       )
     }
 
@@ -173,24 +161,6 @@ const UserAvatar: React.FC = () => {
         />
       )
     }
-
-    // Final fallback - simple colored circle with initials
-    const initials = session?.user?.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 
-                     session?.user?.email?.[0]?.toUpperCase() || 'U'
-    
-    return (
-      <div 
-        style={{
-          ...avatarStyle,
-          backgroundColor: '#1890ff',
-          color: 'white',
-          fontSize: size * 0.4,
-          fontWeight: 600
-        }}
-      >
-        {initials}
-      </div>
-    )
   }
 
   if (isLoading) {
