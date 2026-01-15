@@ -133,6 +133,24 @@ const Uploader: React.FC<UploaderProps> = ({ onSaveComplete }) => {
     setIsSaving(true) // Start loading state
 
     try {
+      // Get current user's profile image to delete old versions
+      const userResponse = await fetch('/api/user')
+      let oldImageUrls: string[] = []
+      
+      if (userResponse.ok) {
+        const userData = await userResponse.json()
+        const baseUrl = process.env.NEXT_PUBLIC_S3_BASE_URL
+        
+        // Only delete old preview and cropped files if they exist
+        // Keep the original file as it can be reused
+        if (baseUrl) {
+          oldImageUrls = [
+            userData.image_cropped,
+            userData.image_preview
+          ].filter(url => url && url.startsWith(baseUrl))
+        }
+      }
+
       // Convert original image to file
       const originalFile = await dataURLToFile(originalImage, 'original.jpg')
       
@@ -175,6 +193,17 @@ const Uploader: React.FC<UploaderProps> = ({ onSaveComplete }) => {
         const croppedUrl = `${baseUrl}/${filenamePrefix}-cropped.jpg`
         const croppedPreviewUrl = `${baseUrl}/${filenamePrefix}-preview.jpg`
         const originalPreviewUrl = `${baseUrl}/${filenamePrefix}-original-preview.jpg`
+
+        // Delete old preview and cropped images from S3 after successful upload
+        if (oldImageUrls.length > 0) {
+          try {
+            await deleteOldImages(oldImageUrls)
+            console.log('Old profile images deleted successfully')
+          } catch (error) {
+            console.error('Error deleting old images:', error)
+            // Don't fail the whole process if old image deletion fails
+          }
+        }
 
         // First, create user_image record
         const createImageResponse = await fetch('/api/user-images', {

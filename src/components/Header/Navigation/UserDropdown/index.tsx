@@ -4,7 +4,7 @@ import { Button } from 'antd'
 import Link from 'next/link'
 import { signOut } from 'next-auth/react'
 import { LoadingOutlined } from '@ant-design/icons'
-import { generateAvatarDataUri } from '@/lib/generateAvatar'
+import { generateAvatarDataUri, getUserProfileImageThumbnail } from '@/lib/generateAvatar'
 // styles
 import style from './style.module.scss'
 // types
@@ -63,11 +63,8 @@ const UserAvatar: React.FC = () => {
       }
       
       try {
-        const response = await fetch('/api/user')
-        if (response.ok) {
-          const userData = await response.json()
-          setUserImageUrl(userData.image_preview || userData.image_cropped || null)
-        }
+        const imageUrl = await getUserProfileImageThumbnail()
+        setUserImageUrl(imageUrl)
       } catch (error) {
         console.error('Error fetching user data:', error)
       } finally {

@@ -21,6 +21,7 @@ export default function Profile({ userId, friendStatus = null }: ProfileProps) {
 
   return (
     <div className={style.profile}>
+      {userId}
       <div className={style.profile__imageWrapper}>
         <Image userId={userId} />
         {!isCurrentUser && (

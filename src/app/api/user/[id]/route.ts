@@ -18,7 +18,7 @@ export async function GET(
     try {
       // Only select public fields for guest viewing
       const result = await client.query(
-        'SELECT id, name, image_cropped, image_original, image_preview, created_at FROM users WHERE id = $1',
+        'SELECT id, name, image_cropped, image_preview, created_at FROM users WHERE id = $1',
         [userId]
       )
 
