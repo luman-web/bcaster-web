@@ -1,5 +1,5 @@
 {
-  "name": "walltapp-frontend",
+  "name": "bcaster-frontend",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "migrate": "psql $WALLTAPP_DB_URL -f schema.sql"
+    "migrate": "psql $BCASTER_DB_URL -f schema.sql"
   },
   "dependencies": {
     "@ant-design/nextjs-registry": "^1.0.0",

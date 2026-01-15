@@ -13,7 +13,7 @@ export default function () {
           style={{ color: 'white', fontSize: '20px', textDecoration: 'none' }}
           href="/"
         >
-          WalltApp
+          Bcaster
         </Link>
         <Navigation />
       </div>

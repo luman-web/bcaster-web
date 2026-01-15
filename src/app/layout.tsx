@@ -11,9 +11,9 @@ import { WebSocketProvider } from '@/components/WebSocketProvider'
 import styles from './styles.module.scss'
 
 export const metadata: Metadata = {
-  title: 'WalltApp',
-  description: 'Страница профиля walltapp.ru',
-  keywords: ['walltapp', 'drift', 'дрифт', 'соревнования', 'социальная сеть'],
+  title: 'Bcaster',
+  description: 'Страница профиля bcaster.ru',
+  keywords: ['bcaster', 'соревнования', 'социальная сеть', 'drift', 'дрифт'],
 }
 
 export default function RootLayout({
