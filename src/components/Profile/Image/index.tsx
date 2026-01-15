@@ -8,6 +8,7 @@ import UploadedImage from './UploadedImage'
 
 import { useState, useEffect } from 'react'
 import { SessionProvider, useSession } from 'next-auth/react'
+import { useUserProfileStore } from '@/store/userProfileStore'
 import { Spin } from 'antd'
 import { LoadingOutlined } from '@ant-design/icons'
 import Placeholder from './Placeholder'
@@ -18,6 +19,8 @@ interface ProfileImageContentProps {
 
 function ProfileImageContent({ userId }: ProfileImageContentProps) {
   const { data: session } = useSession()
+  const triggerProfileImageUpdate = useUserProfileStore((state) => state.triggerProfileImageUpdate)
+  const profileImageUpdateTrigger = useUserProfileStore((state) => state.profileImageUpdateTrigger)
   const [selectImageModalShown, showSelectImageModal] = useState(false)
   const [userImageUrl, setUserImageUrl] = useState<string | null>(null)
   const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null)
@@ -45,7 +48,7 @@ function ProfileImageContent({ userId }: ProfileImageContentProps) {
 
   useEffect(() => {
     fetchUserImage()
-  }, [session])
+  }, [session, profileImageUpdateTrigger])
 
   const handleModalClose = () => {
     showSelectImageModal(false)
@@ -66,20 +69,30 @@ function ProfileImageContent({ userId }: ProfileImageContentProps) {
     setIsDeleting(true)
 
     try {
-      // Get current user's profile image info to delete from S3
+      // Get current user's profile image info including user_images data
       const userResponse = await fetch('/api/user')
       if (userResponse.ok) {
         const userData = await userResponse.json()
         const baseUrl = process.env.NEXT_PUBLIC_S3_BASE_URL
         
         if (baseUrl) {
+          // Collect all image files to delete from both users table and user_images data
           const imagesToDelete = [
-            userData.original_url,
-            userData.image_cropped,
-            userData.image_preview
+            userData.original_url,      // Original full image
+            userData.image_cropped,     // 250x250 cropped
+            userData.image_preview      // 50x50 preview of cropped
           ].filter(url => url && url.startsWith(baseUrl))
 
-          // Delete images from S3
+          // Also delete the original-preview image if profile_image_id exists
+          // The original-preview is derived from the profile_image_id by replacing -preview.jpg with -original-preview.jpg
+          if (userData.image_preview && userData.image_preview.startsWith(baseUrl)) {
+            const originalPreviewUrl = userData.image_preview.replace('-preview.jpg', '-original-preview.jpg')
+            if (!imagesToDelete.includes(originalPreviewUrl)) {
+              imagesToDelete.push(originalPreviewUrl)
+            }
+          }
+
+          // Delete all images from S3
           for (const imageUrl of imagesToDelete) {
             try {
               const filename = imageUrl.replace(`${baseUrl}/`, '')
@@ -118,6 +131,8 @@ function ProfileImageContent({ userId }: ProfileImageContentProps) {
         console.log('Profile images cleared from user record')
         setUserImageUrl(null)
         setOriginalImageUrl(null)
+        // Trigger store update to notify all components
+        triggerProfileImageUpdate()
       } else {
         console.error('Failed to clear profile images')
       }

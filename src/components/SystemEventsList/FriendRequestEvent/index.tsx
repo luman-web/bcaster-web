@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Button, Space, Avatar, message } from 'antd'
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons'
 import Link from 'next/link'
-import { getUserDisplayImage } from '@/lib/generateAvatar'
+import { useUserDisplayImage } from '@/hooks/useUserImage'
 import style from './style.module.scss'
 
 interface FriendRequestEventProps {
@@ -31,21 +31,7 @@ export default function FriendRequestEvent({
   onRemove
 }: FriendRequestEventProps) {
   const [loading, setLoading] = useState(false)
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
-
-  // Fetch requester's display image (profile thumbnail or generated avatar)
-  useEffect(() => {
-    const fetchAvatar = async () => {
-      try {
-        const url = await getUserDisplayImage(event.data.requester_id)
-        setAvatarUrl(url)
-      } catch (error) {
-        console.error('Error fetching avatar:', error)
-      }
-    }
-
-    fetchAvatar()
-  }, [event.data.requester_id])
+  const avatarUrl = useUserDisplayImage(event.data.requester_id)
 
   const handleAccept = async () => {
     setLoading(true)

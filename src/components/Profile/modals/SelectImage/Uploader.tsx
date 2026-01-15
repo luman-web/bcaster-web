@@ -4,6 +4,7 @@ import { Upload, Button, Modal } from 'antd'
 import type { GetProp, UploadFile, UploadProps } from 'antd'
 import { useSession } from 'next-auth/react'
 import ButtonLoading from '@/components/ButtonLoading'
+import { useUserProfileStore } from '@/store/userProfileStore'
 import 'react-advanced-cropper/dist/style.css'
 
 // Create a proper wrapper component with forwardRef
@@ -33,6 +34,7 @@ interface UploaderProps {
 
 const Uploader: React.FC<UploaderProps> = ({ onSaveComplete }) => {
   const { data: session } = useSession()
+  const triggerProfileImageUpdate = useUserProfileStore((state) => state.triggerProfileImageUpdate)
   const [fileList, setFileList] = useState<UploadFile[]>([])
   const [previewImage, setPreviewImage] = useState<string>('')
   const [originalImage, setOriginalImage] = useState<string>('')
@@ -237,6 +239,8 @@ const Uploader: React.FC<UploaderProps> = ({ onSaveComplete }) => {
 
         if (updateResponse.ok) {
           console.log('User profile updated with new profile image')
+          // Trigger store update to notify all components
+          triggerProfileImageUpdate()
           // Clear all uploaded file data for fresh upload interface
           setFileList([])
           setPreviewImage('')

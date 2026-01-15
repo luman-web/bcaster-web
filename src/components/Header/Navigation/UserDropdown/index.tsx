@@ -4,7 +4,8 @@ import { Button } from 'antd'
 import Link from 'next/link'
 import { signOut } from 'next-auth/react'
 import { LoadingOutlined } from '@ant-design/icons'
-import { generateAvatarDataUri, getUserProfileImageThumbnail } from '@/lib/generateAvatar'
+import { generateAvatarDataUri } from '@/lib/generateAvatar'
+import { useUserProfileImageThumbnail } from '@/hooks/useUserImage'
 // styles
 import style from './style.module.scss'
 // types
@@ -13,7 +14,7 @@ import type { MenuProps } from 'antd'
 const UserAvatar: React.FC = () => {
   const size = 32
   const { data: session } = useSession()
-  const [userImageUrl, setUserImageUrl] = useState<string | null>(null)
+  const userImageUrl = useUserProfileImageThumbnail()
   const [isLoading, setIsLoading] = useState(true)
   const [generatedAvatar, setGeneratedAvatar] = useState<string>('')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
@@ -54,26 +55,12 @@ const UserAvatar: React.FC = () => {
     },
   ]
 
-  // Fetch user image from API
+  // Update loading state when image URL is fetched
   useEffect(() => {
-    const fetchUserImage = async () => {
-      if (!session?.user?.id) {
-        setIsLoading(false)
-        return
-      }
-      
-      try {
-        const imageUrl = await getUserProfileImageThumbnail()
-        setUserImageUrl(imageUrl)
-      } catch (error) {
-        console.error('Error fetching user data:', error)
-      } finally {
-        setIsLoading(false)
-      }
+    if (userImageUrl !== null) {
+      setIsLoading(false)
     }
-
-    fetchUserImage()
-  }, [session])
+  }, [userImageUrl])
 
   // Generate avatar based on user ID
   useEffect(() => {
@@ -144,7 +131,6 @@ const UserAvatar: React.FC = () => {
           src={userImageUrl}
           alt="User Avatar"
           style={avatarStyle}
-          onError={() => setUserImageUrl(null)} // Fallback to generated avatar if image fails to load
         />
       )
     }
