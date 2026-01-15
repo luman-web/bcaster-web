@@ -24,3 +24,37 @@
 .list {
   width: 100%;
 }
+
+.eventWrapper {
+  position: relative;
+}
+
+.removeEventBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  color: #999;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+
+  &:hover {
+    color: #ff4d4f;
+  }
+}
+
+.empty {
+  padding: 20px;
+}
+
+.loading {
+  padding: 20px;
+}

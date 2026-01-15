@@ -1,8 +1,7 @@
 .eventItem {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px;
+  flex-direction: column;
+  padding: 16px;
   border-bottom: 1px solid #f0f0f0;
   transition: background-color 0.2s;
 
@@ -15,34 +14,38 @@
   }
 }
 
-.eventContent {
+.eventHeader {
   display: flex;
-  align-items: flex-start;
   gap: 12px;
-  flex: 1;
-  min-width: 0;
+  align-items: flex-start;
+}
+
+.avatarSection {
+  margin-bottom: 12px;
 }
 
 .avatar {
   flex-shrink: 0;
+  margin-top: 2px;
 }
 
-.textContent {
+.contentSection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   flex: 1;
-  min-width: 0;
-
-  p {
-    margin: 4px 0;
-    font-size: 14px;
-    color: #666;
-  }
 
   a {
     color: inherit;
     text-decoration: none;
+    font-weight: 500;
 
     &:hover {
       text-decoration: underline;
+    }
+
+    strong {
+      font-size: 14px;
     }
   }
 }
@@ -50,4 +53,34 @@
 .timestamp {
   font-size: 12px;
   color: #999;
+}
+
+.statusMessage {
+  font-size: 14px;
+}
+
+.statusAccepted {
+  font-size: 12px;
+  color: #52c41a;
+  font-weight: 500;
+}
+
+.statusRejected {
+  font-size: 12px;
+  color: #ff4d4f;
+  font-weight: 500;
+}
+
+.btnHolder {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.confirmBtn {
+  flex: 1;
+}
+
+.rejectBtn {
+  flex: 1;
 }

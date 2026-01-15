@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Empty, Spin } from 'antd'
-import { useWebSocket } from '@/lib/useWebSocket'
 import FriendRequestEvent from './FriendRequestEvent'
 import style from './style.module.scss'
 
@@ -81,19 +80,45 @@ const SystemEventsList: React.FC<{ onOpen?: () => void }> = ({ onOpen }) => {
     }
   }
 
-  const handleEventRemove = (eventId: string) => {
-    setEvents(prev => prev.filter(e => e.id !== eventId))
+  const handleEventRemove = async (eventId: string) => {
+    try {
+      // Delete from database first
+      const response = await fetch(`/api/system-events/${eventId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        console.error('Failed to delete event')
+        return
+      }
+
+      // Remove from UI state only after successful deletion
+      setEvents(prev => prev.filter(e => e.id !== eventId))
+      
+      // Trigger parent re-render to update event count
+      if (onOpen) {
+        onOpen()
+      }
+    } catch (error) {
+      console.error('Error removing event:', error)
+    }
   }
 
   const renderEventComponent = (event: SystemEvent) => {
     switch (event.event_type) {
       case 'friend.request':
         return (
-          <div key={event.id} data-event-id={event.id}>
+          <div key={event.id} data-event-id={event.id} className={style.eventWrapper}>
+            <button
+              className={style.removeEventBtn}
+              onClick={() => handleEventRemove(event.id)}
+              title="Удалить уведомление"
+              aria-label="Delete notification"
+            >
+              ×
+            </button>
             <FriendRequestEvent
               event={event}
-              onAccept={() => handleEventRemove(event.id)}
-              onReject={() => handleEventRemove(event.id)}
             />
           </div>
         )
@@ -105,7 +130,9 @@ const SystemEventsList: React.FC<{ onOpen?: () => void }> = ({ onOpen }) => {
   if (loading) {
     return (
       <div className={style.container}>
-        <Spin />
+        <div className={style.loading}>
+          <Spin />
+        </div>
       </div>
     )
   }
@@ -113,7 +140,7 @@ const SystemEventsList: React.FC<{ onOpen?: () => void }> = ({ onOpen }) => {
   return (
     <div ref={containerRef} className={style.container}>
       {events.length === 0 ? (
-        <Empty description="Нет уведомлений" />
+        <div className={style.empty}><Empty description="Нет уведомлений" /></div>
       ) : (
         <div className={style.list}>
           {events.map(event => renderEventComponent(event))}

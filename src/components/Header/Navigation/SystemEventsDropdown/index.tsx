@@ -64,6 +64,8 @@ const Navigation: React.FC = () => {
       hasMarkedAsReadRef.current = true
       // Mark as read will happen in SystemEventsList
     }
+    // Refresh count when event is removed or marked as read
+    fetchEventsCount()
   }
 
   const handleClickOutside = (event: MouseEvent) => {

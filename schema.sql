@@ -5,6 +5,8 @@
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255),
+    surname VARCHAR(255),
+    patronymic VARCHAR(255),
     email VARCHAR(255) UNIQUE NOT NULL,
     "emailVerified" TIMESTAMPTZ,
     image TEXT, -- NextAuth default field for backward compatibility
