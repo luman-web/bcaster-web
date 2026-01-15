@@ -14,7 +14,12 @@ export async function GET(req: NextRequest) {
     
     try {
       const result = await client.query(
-        'SELECT id, name, email, "emailVerified", image, image_original, image_cropped, image_preview, created_at, updated_at FROM users WHERE id = $1',
+        `SELECT u.id, u.name, u.email, u."emailVerified", u.image, u.profile_image_id, 
+                u.image_cropped, u.image_preview, u.created_at, u.updated_at,
+                ui.original_url
+         FROM users u
+         LEFT JOIN user_images ui ON u.profile_image_id = ui.id
+         WHERE u.id = $1`,
         [session.user.id]
       )
 
@@ -45,7 +50,8 @@ export async function PUT(req: NextRequest) {
   }
 
   try {
-    const { image, image_original, image_cropped, image_preview } = await req.json()
+    const body = await req.json()
+    const { profile_image_id, image_cropped, image_preview } = body
     const client = await pool.connect()
     
     try {
@@ -54,13 +60,9 @@ export async function PUT(req: NextRequest) {
       const values = []
       let paramIndex = 1
 
-      if (image !== undefined) {
-        updates.push(`image = $${paramIndex++}`)
-        values.push(image)
-      }
-      if (image_original !== undefined) {
-        updates.push(`image_original = $${paramIndex++}`)
-        values.push(image_original)
+      if (profile_image_id !== undefined) {
+        updates.push(`profile_image_id = $${paramIndex++}`)
+        values.push(profile_image_id)
       }
       if (image_cropped !== undefined) {
         updates.push(`image_cropped = $${paramIndex++}`)
@@ -72,7 +74,7 @@ export async function PUT(req: NextRequest) {
       }
 
       if (updates.length === 0) {
-        return new Response(JSON.stringify({ error: 'No image fields provided' }), { status: 400 })
+        return new Response(JSON.stringify({ error: 'No fields provided' }), { status: 400 })
       }
 
       updates.push(`updated_at = NOW()`)

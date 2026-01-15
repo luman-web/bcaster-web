@@ -7,13 +7,30 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(255),
     email VARCHAR(255) UNIQUE NOT NULL,
     "emailVerified" TIMESTAMPTZ,
-    image TEXT, -- Legacy field, kept for backward compatibility
-    image_original TEXT, -- Original uploaded image URL
-    image_cropped TEXT, -- 250x250 cropped image URL
-    image_preview TEXT, -- 50x50 preview image URL
+    image TEXT, -- NextAuth default field for backward compatibility
+    profile_image_id UUID, -- Will be set to reference user_images(id) after table creation
+    image_cropped TEXT, -- 250x250 cropped version of current profile image
+    image_preview TEXT, -- 50x50 preview version of current profile image
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- User images table - stores user uploaded images
+CREATE TABLE IF NOT EXISTS user_images (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    original_url TEXT NOT NULL, -- Original uploaded image URL (stored in S3 images folder)
+    preview_url TEXT, -- Preview image URL
+    width INT, -- Original image width
+    height INT, -- Original image height
+    mime_type VARCHAR(50), -- Image MIME type (e.g., image/jpeg, image/png)
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Add foreign key constraint for profile_image_id in users table
+ALTER TABLE users ADD CONSTRAINT fk_users_profile_image 
+    FOREIGN KEY (profile_image_id) REFERENCES user_images(id) ON DELETE SET NULL;
 
 -- Accounts table - stores OAuth account connections
 CREATE TABLE IF NOT EXISTS accounts (
@@ -93,6 +110,8 @@ CREATE TABLE IF NOT EXISTS user_events (
 );
 
 -- Indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_user_images_user_id ON user_images(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_images_created_at ON user_images(created_at);
 CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON accounts("userId");
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions("userId");
 CREATE INDEX IF NOT EXISTS idx_sessions_session_token ON sessions("sessionToken");
@@ -120,6 +139,9 @@ END;
 $$ language 'plpgsql';
 
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_user_images_updated_at BEFORE UPDATE ON user_images
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_conversations_updated_at BEFORE UPDATE ON conversations

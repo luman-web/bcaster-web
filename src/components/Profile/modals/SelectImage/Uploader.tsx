@@ -133,23 +133,6 @@ const Uploader: React.FC<UploaderProps> = ({ onSaveComplete }) => {
     setIsSaving(true) // Start loading state
 
     try {
-      // First, get current user's image URLs to delete old images
-      const userResponse = await fetch('/api/user')
-      let oldImageUrls: string[] = []
-      
-      if (userResponse.ok) {
-        const userData = await userResponse.json()
-        // Collect all existing image URLs
-        const baseUrl = process.env.NEXT_PUBLIC_S3_BASE_URL
-        if (baseUrl) {
-          oldImageUrls = [
-            userData.image_original,
-            userData.image_cropped,
-            userData.image_preview
-          ].filter(url => url && url.startsWith(baseUrl))
-        }
-      }
-
       // Convert original image to file
       const originalFile = await dataURLToFile(originalImage, 'original.jpg')
       
@@ -157,74 +140,82 @@ const Uploader: React.FC<UploaderProps> = ({ onSaveComplete }) => {
       const croppedFile = await dataURLToFile(previewImage, 'cropped.jpg')
       
       // Optimize images using the API
-      const [optimizedOriginal, optimizedCropped, optimizedPreview] = await Promise.all([
+      const [optimizedOriginal, optimizedCropped, optimizedCroppedPreview, optimizedOriginalPreview] = await Promise.all([
         optimizeImage(originalFile, 800, 800, 90), // Keep original at reasonable size with high quality
-        optimizeImage(croppedFile, 250, 250, 85),   // Optimize cropped version
-        optimizeImage(croppedFile, 50, 50, 80)      // Create optimized preview from cropped image
+        optimizeImage(croppedFile, 250, 250, 85),   // Optimize cropped version (profile display)
+        optimizeImage(croppedFile, 50, 50, 80),     // Create 50x50 preview from cropped (navbar/header)
+        optimizeImage(originalFile, 400, 400, 75)   // Create optimized preview from original (album/list display)
       ])
 
       // Generate unique filename prefix with user ID for organization
       const timestamp = Date.now()
       const randomId = Math.random().toString(36).substr(2, 9)
       const userId = session.user.id
-      const filenamePrefix = `${userId}/profile-image/${timestamp}-${randomId}`
+      const filenamePrefix = `${userId}/images/${timestamp}-${randomId}`
 
-      // Upload all three optimized versions
+      // Upload all four optimized versions
       const uploads = await Promise.all([
         uploadFile(optimizedOriginal, `${filenamePrefix}-original.jpg`),
         uploadFile(optimizedCropped, `${filenamePrefix}-cropped.jpg`),
-        uploadFile(optimizedPreview, `${filenamePrefix}-preview.jpg`)
+        uploadFile(optimizedCroppedPreview, `${filenamePrefix}-preview.jpg`),
+        uploadFile(optimizedOriginalPreview, `${filenamePrefix}-original-preview.jpg`)
       ])
 
       if (uploads.every(result => result.success)) {
         console.log('All images uploaded successfully')
         
-        // Delete old images from Selectel after successful upload
-        if (oldImageUrls.length > 0) {
-          try {
-            await deleteOldImages(oldImageUrls)
-            console.log('Old images deleted successfully')
-          } catch (error) {
-            console.error('Error deleting old images:', error)
-            // Don't fail the whole process if old image deletion fails
-          }
-        }
+        const baseUrl = process.env.NEXT_PUBLIC_S3_BASE_URL
         
-        // Save image URLs to database
-        try {
-          const baseUrl = process.env.NEXT_PUBLIC_S3_BASE_URL
-          
-          if (!baseUrl) {
-            console.error('NEXT_PUBLIC_S3_BASE_URL environment variable is not set')
-            return
-          }
-          
-          const imageUrls = {
-            image_original: `${baseUrl}/${filenamePrefix}-original.jpg`,
-            image_cropped: `${baseUrl}/${filenamePrefix}-cropped.jpg`,
-            image_preview: `${baseUrl}/${filenamePrefix}-preview.jpg`,
-            image: `${baseUrl}/${filenamePrefix}-cropped.jpg` // Set cropped as main image for backward compatibility
-          }
+        if (!baseUrl) {
+          console.error('NEXT_PUBLIC_S3_BASE_URL environment variable is not set')
+          return
+        }
 
-          const updateResponse = await fetch('/api/user', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(imageUrls),
-          })
+        const originalUrl = `${baseUrl}/${filenamePrefix}-original.jpg`
+        const croppedUrl = `${baseUrl}/${filenamePrefix}-cropped.jpg`
+        const croppedPreviewUrl = `${baseUrl}/${filenamePrefix}-preview.jpg`
+        const originalPreviewUrl = `${baseUrl}/${filenamePrefix}-original-preview.jpg`
 
-          if (updateResponse.ok) {
-            console.log('User profile updated with new image URLs')
-            // Clear all uploaded file data for fresh upload interface
-            setFileList([])
-            setPreviewImage('')
-            setOriginalImage('')
-            // Close the modal after successful save
-            onSaveComplete?.()
-          } else {
-            console.error('Failed to update user profile with image URLs')
-          }
-        } catch (error) {
-          console.error('Error updating user profile:', error)
+        // First, create user_image record
+        const createImageResponse = await fetch('/api/user-images', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            original_url: originalUrl,
+            preview_url: originalPreviewUrl, // Optimized original for album/list display
+            mime_type: 'image/jpeg'
+          }),
+        })
+
+        if (!createImageResponse.ok) {
+          console.error('Failed to create user_image record')
+          return
+        }
+
+        const imageRecord = await createImageResponse.json()
+        const userImageId = imageRecord.id
+
+        // Then, update user profile with new profile_image_id and cropped/preview URLs
+        const updateResponse = await fetch('/api/user', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            profile_image_id: userImageId,
+            image_cropped: croppedUrl,
+            image_preview: croppedPreviewUrl // 50x50 of cropped for navbar
+          }),
+        })
+
+        if (updateResponse.ok) {
+          console.log('User profile updated with new profile image')
+          // Clear all uploaded file data for fresh upload interface
+          setFileList([])
+          setPreviewImage('')
+          setOriginalImage('')
+          // Close the modal after successful save
+          onSaveComplete?.()
+        } else {
+          console.error('Failed to update user profile with new profile image')
         }
       } else {
         console.error('Some uploads failed')

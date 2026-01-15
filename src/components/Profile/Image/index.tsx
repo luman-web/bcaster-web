@@ -34,7 +34,7 @@ function ProfileImageContent({ userId }: ProfileImageContentProps) {
       if (response.ok) {
         const userData = await response.json()
         setUserImageUrl(userData.image_cropped || null)
-        setOriginalImageUrl(userData.image_original || null)
+        setOriginalImageUrl(userData.original_url || null)
       }
     } catch (error) {
       console.error('Error fetching user data:', error)
@@ -66,21 +66,21 @@ function ProfileImageContent({ userId }: ProfileImageContentProps) {
     setIsDeleting(true)
 
     try {
-      // First, get current user's image URLs to delete from Selectel
+      // Get current user's profile image info to delete from S3
       const userResponse = await fetch('/api/user')
       if (userResponse.ok) {
         const userData = await userResponse.json()
         const baseUrl = process.env.NEXT_PUBLIC_S3_BASE_URL
         
         if (baseUrl) {
-          const imageUrls = [
-            userData.image_original,
+          const imagesToDelete = [
+            userData.original_url,
             userData.image_cropped,
             userData.image_preview
           ].filter(url => url && url.startsWith(baseUrl))
 
-          // Delete images from Selectel
-          for (const imageUrl of imageUrls) {
+          // Delete images from S3
+          for (const imageUrl of imagesToDelete) {
             try {
               const filename = imageUrl.replace(`${baseUrl}/`, '')
               
@@ -103,24 +103,23 @@ function ProfileImageContent({ userId }: ProfileImageContentProps) {
         }
       }
 
-      // Clear image URLs from database
+      // Clear profile image from user record
       const updateResponse = await fetch('/api/user', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          image: null,
-          image_original: null,
+          profile_image_id: null,
           image_cropped: null,
           image_preview: null
         }),
       })
 
       if (updateResponse.ok) {
-        console.log('Profile images cleared from database')
-        setUserImageUrl(null) // Update local state
-        setOriginalImageUrl(null) // Clear original image URL
+        console.log('Profile images cleared from user record')
+        setUserImageUrl(null)
+        setOriginalImageUrl(null)
       } else {
-        console.error('Failed to clear profile images from database')
+        console.error('Failed to clear profile images')
       }
 
     } catch (error) {
