@@ -50,11 +50,11 @@ const UserAvatar: React.FC = () => {
     },
     {
       label: <Link href="/friends">Друзья</Link>,
-      key: '0',
+      key: '1',
     },
     {
       label: <a onClick={() => signOut({ redirectTo: '/' })}>Выход</a>,
-      key: '1',
+      key: '2',
     },
   ]
 

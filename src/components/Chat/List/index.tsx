@@ -1,5 +1,5 @@
 import React from 'react'
-import { Tabs, List, Badge } from 'antd'
+import { Tabs, List, Badge, Empty } from 'antd'
 import {
   MessageOutlined,
   TeamOutlined,
@@ -51,6 +51,7 @@ const ChatList: React.FC = () => {
         <List
           className={styles.listContainer}
           dataSource={directChats}
+          locale={{ emptyText: <Empty description="Нет данных" /> }}
           renderItem={(item) => {
             return directChats.length ? (
               <DirectChatItem
@@ -85,6 +86,7 @@ const ChatList: React.FC = () => {
         <List
           className={styles.listContainer}
           dataSource={groupChats}
+          locale={{ emptyText: <Empty description="Нет данных" /> }}
           renderItem={(item) => (
             <GroupChatItem
               key={item.id}
@@ -117,6 +119,7 @@ const ChatList: React.FC = () => {
         <List
           className={styles.listContainer}
           dataSource={eventChats}
+          locale={{ emptyText: <Empty description="Нет данных" /> }}
           renderItem={(item) => (
             <EventChatItem
               key={item.id}
