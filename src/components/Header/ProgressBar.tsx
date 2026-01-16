@@ -35,7 +35,6 @@ export default function useNavigationProgress() {
         height: 100%;
         box-shadow: 0 0 10px #1890ff, 0 0 5px #1890ff;
         opacity: 1;
-        transform: rotate(3deg) translate(0px, -4px);
       }
     `
     document.head.appendChild(style)
