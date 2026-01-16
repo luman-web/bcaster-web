@@ -119,6 +119,14 @@ const SystemEventsList: React.FC<{ onOpen?: () => void }> = ({ onOpen }) => {
             </button>
             <FriendRequestEvent
               event={event}
+              onAccept={() => {
+                // Refresh events to update status
+                fetchEvents()
+              }}
+              onReject={() => {
+                // Refresh events to update status
+                fetchEvents()
+              }}
             />
           </div>
         )

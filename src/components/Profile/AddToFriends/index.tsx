@@ -2,21 +2,24 @@
 
 import { useState, useEffect } from 'react'
 import { Button, message } from 'antd'
-import { UserAddOutlined, UserDeleteOutlined, CheckOutlined } from '@ant-design/icons'
+import { UserAddOutlined, CheckOutlined, UserOutlined, MinusOutlined } from '@ant-design/icons'
 
 interface AddToFriendsProps {
   userId: string
-  initialStatus?: 'pending' | 'approved' | 'rejected' | null
+  initialStatus?: 'friend' | 'following' | 'blocked' | null
+  onRequestUpdated?: () => void
 }
 
 interface StatusResponse {
-  status: 'pending' | 'approved' | 'rejected' | null
+  status: 'friend' | 'following' | 'blocked' | null
+  friend_request_status?: 'pending' | 'accepted' | 'declined' | null
   direction?: 'outgoing' | 'incoming'
   edgeId?: string
 }
 
-export default function AddToFriends({ userId, initialStatus = null }: AddToFriendsProps) {
-  const [status, setStatus] = useState<'pending' | 'approved' | 'rejected' | null>(initialStatus)
+export default function AddToFriends({ userId, initialStatus = null, onRequestUpdated }: AddToFriendsProps) {
+  const [status, setStatus] = useState<'friend' | 'following' | 'blocked' | null>(initialStatus)
+  const [requestStatus, setRequestStatus] = useState<'pending' | 'accepted' | 'declined' | null>(null)
   const [direction, setDirection] = useState<'outgoing' | 'incoming' | null>(null)
   const [edgeId, setEdgeId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -30,6 +33,7 @@ export default function AddToFriends({ userId, initialStatus = null }: AddToFrie
         if (response.ok) {
           const data: StatusResponse = await response.json()
           setStatus(data.status)
+          setRequestStatus(data.friend_request_status || null)
           setDirection(data.direction || null)
           setEdgeId(data.edgeId || null)
         }
@@ -59,7 +63,8 @@ export default function AddToFriends({ userId, initialStatus = null }: AddToFrie
       }
 
       // Set status immediately on success
-      setStatus('pending')
+      setStatus('following')
+      setRequestStatus('pending')
       setDirection('outgoing')
       message.success('Запрос отправлен!')
     } catch (error) {
@@ -72,20 +77,43 @@ export default function AddToFriends({ userId, initialStatus = null }: AddToFrie
   const handleRemoveFriend = async () => {
     setLoading(true)
     try {
-      const response = await fetch('/api/user/friends/remove', {
+      const response = await fetch('/api/friends/remove', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId }),
       })
 
       if (!response.ok) {
-        throw new Error('Не удалось удалить контакт')
+        throw new Error('Не удалось выполнить действие')
       }
 
-      setStatus(null)
+      // Set user as following after removing friend
+      setStatus('following')
       setDirection(null)
-      setEdgeId(null)
-      message.success('Контакт удален')
+      message.success('Статус изменен')
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : 'Что то пошло не так')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleFollow = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/friends/follow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Не удалось подписаться')
+      }
+
+      setStatus('following')
+      setDirection(null)
+      message.success('Вы подписались!')
     } catch (error) {
       message.error(error instanceof Error ? error.message : 'Что то пошло не так')
     } finally {
@@ -110,9 +138,11 @@ export default function AddToFriends({ userId, initialStatus = null }: AddToFrie
         throw new Error('Не удалось принять запрос')
       }
 
-      setStatus('approved')
-      setDirection('outgoing') // After accepting, treat as outgoing approved
+      setStatus('friend')
+      setRequestStatus('accepted')
+      setDirection('outgoing')
       message.success('Запрос принят!')
+      onRequestUpdated?.()
     } catch (error) {
       message.error(error instanceof Error ? error.message : 'Что то пошло не так')
     } finally {
@@ -120,75 +150,194 @@ export default function AddToFriends({ userId, initialStatus = null }: AddToFrie
     }
   }
 
-  if (isLoadingStatus) {
+  const handleDeclineRequest = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/user/friends/reject', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Не удалось отклонить запрос')
+      }
+
+      setRequestStatus('declined')
+      message.success('Запрос отклонен')
+      onRequestUpdated?.()
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : 'Что то пошло не так')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (isLoadingStatus) return null
+
+  // Blocked by this user - show blocked message
+  if (status === 'blocked' && direction === 'incoming') {
     return (
-      <Button
-        type="primary"
-        loading
-        block
-      >
-        Загрузка...
-      </Button>
+      <div style={{ textAlign: 'center', padding: '16px', color: '#666' }}>
+        <div style={{ fontSize: '14px', marginBottom: '8px' }}>
+          Пользователь ограничил доступ к своей страницы
+        </div>
+      </div>
     )
   }
 
-  // Incoming pending request - show accept button
-  if (status === 'pending' && direction === 'incoming') {
+  // Incoming pending request - show accept and decline buttons
+  if (status === 'following' && requestStatus === 'pending' && direction === 'incoming') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <Button
+          type="primary"
+          icon={<CheckOutlined />}
+          loading={loading}
+          onClick={handleAcceptRequest}
+          block
+        >
+          В друзья
+        </Button>
+        <Button
+          variant="outlined"
+          loading={loading}
+          onClick={handleDeclineRequest}
+          block
+        >
+          Отклонить
+        </Button>
+      </div>
+    )
+  }
+
+  // Incoming declined request - show add friend button
+  if (status === 'following' && requestStatus === 'declined' && direction === 'incoming') {
     return (
       <Button
         type="primary"
-        icon={<CheckOutlined />}
+        icon={<UserAddOutlined />}
         loading={loading}
-        onClick={handleAcceptRequest}
+        onClick={handleAddFriend}
         block
       >
-        Принять запрос
+        Добавить в друзья
       </Button>
     )
   }
 
-  // Approved - show remove friend button
-  if (status === 'approved') {
+  // Friends - show remove button
+  if (status === 'friend') return null
+
+  // Outgoing pending request - show "Request sent" and unsubscribe
+  if (status === 'following' && requestStatus === 'pending' && direction === 'outgoing') {
     return (
-      <Button
-        type="primary"
-        danger
-        icon={<UserDeleteOutlined />}
-        loading={loading}
-        onClick={handleRemoveFriend}
-        block
-      >
-        Удалить из друзей
-      </Button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <Button
+          type="default"
+          disabled
+          block
+        >
+          Запрос отправлен
+        </Button>
+        <Button
+          variant="outlined"
+          icon={<MinusOutlined />}
+          loading={loading}
+          onClick={handleRemoveFriend}
+          block
+        >
+          Отписаться
+        </Button>
+      </div>
     )
   }
 
-  // Outgoing pending request - show unfollow button
-  if (status === 'pending' && direction === 'outgoing') {
+  // Outgoing declined request - show "Request sent" and unsubscribe
+  if (status === 'following' && requestStatus === 'declined' && direction === 'outgoing') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <Button
+          type="default"
+          disabled
+          block
+        >
+          Запрос отправлен
+        </Button>
+        <Button
+          variant="outlined"
+          icon={<MinusOutlined />}
+          loading={loading}
+          onClick={handleRemoveFriend}
+          block
+        >
+          Отписаться
+        </Button>
+      </div>
+    )
+  }
+
+  // Just following (no request) - show both buttons
+  if (status === 'following' && !requestStatus && direction === 'outgoing') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <Button
+          type="primary"
+          icon={<UserAddOutlined />}
+          loading={loading}
+          onClick={handleAddFriend}
+          block
+        >
+          Добавить в друзья
+        </Button>
+        <Button
+          variant="outlined"
+          icon={<MinusOutlined />}
+          loading={loading}
+          onClick={handleRemoveFriend}
+          block
+        >
+          Отписаться
+        </Button>
+      </div>
+    )
+  }
+
+  // Blocked - show unblock only if current user is the one who blocked
+  if (status === 'blocked' && direction === 'outgoing') {
     return (
       <Button
         type="default"
-        danger
-        icon={<UserDeleteOutlined />}
         loading={loading}
         onClick={handleRemoveFriend}
         block
       >
-        Отписаться
+        Разблокировать
       </Button>
     )
   }
 
-  // No relationship - show add friend button
+  // No relationship - show both add friend and follow buttons
   return (
-    <Button
-      type="primary"
-      icon={<UserAddOutlined />}
-      loading={loading}
-      onClick={handleAddFriend}
-      block
-    >
-      Добавить в друзья
-    </Button>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <Button
+        type="primary"
+        icon={<UserAddOutlined />}
+        loading={loading}
+        onClick={handleAddFriend}
+        block
+      >
+        Добавить в друзья
+      </Button>
+      <Button
+        variant="outlined"
+        icon={<UserOutlined />}
+        loading={loading}
+        onClick={handleFollow}
+        block
+      >
+        Подписаться
+      </Button>
+    </div>
   )
 }

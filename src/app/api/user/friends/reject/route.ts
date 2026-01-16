@@ -24,13 +24,12 @@ export async function POST(request: NextRequest) {
 
     const currentUserId = session.user.id
 
-    // Update the edge status to 'rejected' (receiver rejects the request)
-    // The edge stays in the database so they remain as a follower
+    // Update the edge to set friend_request_status to 'declined' (stays as following)
     const result = await pool.query(
       `UPDATE user_edges 
-       SET status = 'rejected', updated_at = NOW()
-       WHERE requester_id = $1 AND receiver_id = $2
-       RETURNING id, status`,
+       SET friend_request_status = 'declined', updated_at = NOW()
+       WHERE requester_id = $1 AND receiver_id = $2 AND status = 'following' AND friend_request_status = 'pending'
+       RETURNING id, status, friend_request_status`,
       [user_id, currentUserId]
     )
 
@@ -41,9 +40,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Delete the friend request event notification
+    await pool.query(
+      `DELETE FROM user_events 
+       WHERE user_id = $1 AND event_type = 'friend.request' AND actor_id = $2`,
+      [currentUserId, user_id]
+    )
+
     return NextResponse.json({
       message: 'Friend request rejected',
-      status: result.rows[0].status
+      status: result.rows[0].status,
+      friend_request_status: result.rows[0].friend_request_status
     })
   } catch (error) {
     console.error('Error rejecting friend request:', error)

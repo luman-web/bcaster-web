@@ -67,12 +67,17 @@ CREATE TABLE IF NOT EXISTS verification_token (
     PRIMARY KEY (identifier, token)
 );
 
--- User edges table - stores relationships between users (followers, friends, friend requests)
+-- User edges table - stores relationships between users (friends, friend requests, followers, blocked)
+-- Status values:
+--   'pending': A friend request is pending (requester sent, receiver hasn't responded)
+--   'approved': Users are friends (mutual relationship - will exist in both directions)
+--   'removed': Requester removed receiver as friend (receiver will see this as outgoing in tabs)
+--   'blocked': Requester has blocked receiver_id
 CREATE TABLE IF NOT EXISTS user_edges (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    requester_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- User who initiated the request/action
-    receiver_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- User receiving the request
-    status VARCHAR(50) NOT NULL DEFAULT 'pending', -- 'pending' (follower), 'approved' (friend), 'rejected', 'blocked'
+    requester_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- User who initiated the action
+    receiver_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- User on the receiving end
+    status VARCHAR(50) NOT NULL DEFAULT 'pending', -- See status values above
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(requester_id, receiver_id), -- Prevent duplicate relationships

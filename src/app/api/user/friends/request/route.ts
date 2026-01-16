@@ -61,6 +61,19 @@ export async function POST(request: NextRequest) {
     const requesterImage = requesterData.rows[0].image_preview
     const requesterName = requesterData.rows[0].name
 
+    // Check if requester is blocked by receiver
+    const blockedCheck = await pool.query(
+      'SELECT id FROM user_edges WHERE requester_id = $1 AND receiver_id = $2 AND status = $3',
+      [receiver_id, requester_id, 'blocked']
+    )
+
+    if (blockedCheck.rows.length > 0) {
+      return NextResponse.json(
+        { error: 'Вы заблокированы этим пользователем' },
+        { status: 403 }
+      )
+    }
+
     // Check if edge already exists
     const existingEdge = await pool.query(
       'SELECT id, status FROM user_edges WHERE requester_id = $1 AND receiver_id = $2',
@@ -75,10 +88,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create friend request edge
+    // Create friend request edge with status='following' and friend_request_status='pending'
     const result = await pool.query(
-      'INSERT INTO user_edges (requester_id, receiver_id, status) VALUES ($1, $2, $3) RETURNING id, status',
-      [requester_id, receiver_id, 'pending']
+      'INSERT INTO user_edges (requester_id, receiver_id, status, friend_request_status) VALUES ($1, $2, $3, $4) RETURNING id, status',
+      [requester_id, receiver_id, 'following', 'pending']
     )
 
     const edgeId = result.rows[0].id
@@ -100,8 +113,6 @@ export async function POST(request: NextRequest) {
         false
       ]
     )
-
-    console.log('send notification to requester', receiver_id)
 
     // Send WebSocket notification
     await sendWebSocketNotification({

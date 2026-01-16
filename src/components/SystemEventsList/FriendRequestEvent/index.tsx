@@ -64,13 +64,16 @@ export default function FriendRequestEvent({
 
     const fetchEdgeStatus = async () => {
       try {
-        const response = await fetch(`/api/user/friends/status?user_id=${event.data.requester_id}`)
+        // Add cache buster to force fresh data
+        const response = await fetch(`/api/user/friends/status?user_id=${event.data.requester_id}&t=${Date.now()}`)
         if (response.ok) {
           const data = await response.json()
-          if (data.status === 'rejected') {
+          if (data.friend_request_status === 'declined') {
             setStatus('rejected')
           } else if (data.status === 'approved') {
             setStatus('accepted')
+          } else {
+            setStatus('pending')
           }
         }
       } catch (error) {
@@ -82,7 +85,7 @@ export default function FriendRequestEvent({
 
     fetchUserData()
     fetchEdgeStatus()
-  }, [event.data.requester_id])
+  }, [event.data.requester_id, event.id])
 
   const displayName = getUserDisplayName(userData)
 
@@ -124,6 +127,7 @@ export default function FriendRequestEvent({
 
       setStatus('rejected')
       message.success('Отклонен')
+      onReject?.()
     } catch (error) {
       message.error(error instanceof Error ? error.message : 'Что то пошло не так')
     } finally {

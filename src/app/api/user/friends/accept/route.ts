@@ -22,10 +22,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Update the edge status to approved
+    // Update the edge status to friend and set friend_request_status to accepted
     const result = await pool.query(
-      'UPDATE user_edges SET status = $1 WHERE id = $2 AND receiver_id = $3 RETURNING requester_id, receiver_id',
-      ['approved', edge_id, session.user.id]
+      'UPDATE user_edges SET status = $1, friend_request_status = $2 WHERE id = $3 AND receiver_id = $4 RETURNING requester_id, receiver_id',
+      ['friend', 'accepted', edge_id, session.user.id]
     )
 
     if (result.rows.length === 0) {
@@ -34,6 +34,24 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       )
     }
+
+    const { requester_id, receiver_id } = result.rows[0]
+
+    // Create reciprocal friend relationship
+    await pool.query(
+      `INSERT INTO user_edges (requester_id, receiver_id, status, friend_request_status)
+       VALUES ($1, $2, 'friend', 'accepted')
+       ON CONFLICT (requester_id, receiver_id) DO UPDATE
+       SET status = 'friend', friend_request_status = 'accepted', updated_at = NOW()`,
+      [receiver_id, requester_id]
+    )
+
+    // Delete the friend request event notification
+    await pool.query(
+      `DELETE FROM user_events 
+       WHERE user_id = $1 AND event_type = 'friend.request' AND actor_id = $2`,
+      [receiver_id, requester_id]
+    )
 
     return NextResponse.json({
       message: 'Friend request accepted successfully',

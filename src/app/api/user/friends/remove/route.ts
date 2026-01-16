@@ -24,12 +24,10 @@ export async function POST(request: NextRequest) {
 
     const currentUserId = session.user.id
 
-    // Check if edge exists (can be in either direction)
+    // Check current relationship status
     const result = await pool.query(
-      `DELETE FROM user_edges 
-       WHERE (requester_id = $1 AND receiver_id = $2) 
-          OR (requester_id = $2 AND receiver_id = $1)
-       RETURNING id, requester_id, receiver_id`,
+      `SELECT status FROM user_edges 
+       WHERE requester_id = $1 AND receiver_id = $2`,
       [currentUserId, user_id]
     )
 
@@ -37,6 +35,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Friend relationship not found' },
         { status: 404 }
+      )
+    }
+
+    const status = result.rows[0].status
+
+    if (status === 'friends') {
+      // Remove friend: mark as removed
+      await pool.query(
+        `UPDATE user_edges 
+         SET status = 'removed', updated_at = NOW()
+         WHERE requester_id = $1 AND receiver_id = $2`,
+        [currentUserId, user_id]
+      )
+      
+      // Delete reciprocal friend relationship
+      await pool.query(
+        `DELETE FROM user_edges 
+         WHERE requester_id = $1 AND receiver_id = $2 AND status = 'friends'`,
+        [user_id, currentUserId]
+      )
+    } else if (status === 'outgoing_request') {
+      // Cancel outgoing request
+      await pool.query(
+        `DELETE FROM user_edges 
+         WHERE requester_id = $1 AND receiver_id = $2 AND status = 'outgoing_request'`,
+        [currentUserId, user_id]
+      )
+    } else {
+      // Delete any other relationship type
+      await pool.query(
+        `DELETE FROM user_edges 
+         WHERE requester_id = $1 AND receiver_id = $2`,
+        [currentUserId, user_id]
       )
     }
 

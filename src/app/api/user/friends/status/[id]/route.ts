@@ -25,30 +25,49 @@ export async function GET(
       )
     }
 
+    // Check if already friends
+    const friendsResult = await pool.query(
+      `SELECT status FROM user_edges 
+       WHERE (requester_id = $1 AND receiver_id = $2 AND status = 'friend')
+       OR (requester_id = $2 AND receiver_id = $1 AND status = 'friend')`,
+      [session.user.id, targetUserId]
+    )
+
+    if (friendsResult.rows.length > 0) {
+      return NextResponse.json({
+        status: 'friend',
+        direction: 'outgoing'
+      })
+    }
+
     // Check outgoing relationship (current user sent request to target)
     const outgoingResult = await pool.query(
-      'SELECT status FROM user_edges WHERE requester_id = $1 AND receiver_id = $2',
+      'SELECT status, friend_request_status FROM user_edges WHERE requester_id = $1 AND receiver_id = $2',
       [session.user.id, targetUserId]
     )
 
     if (outgoingResult.rows.length > 0) {
+      const edge = outgoingResult.rows[0]
       return NextResponse.json({
-        status: outgoingResult.rows[0].status,
+        status: edge.status,
+        friend_request_status: edge.friend_request_status,
         direction: 'outgoing'
       })
     }
 
     // Check incoming relationship (target sent request to current user)
     const incomingResult = await pool.query(
-      'SELECT status, id FROM user_edges WHERE requester_id = $1 AND receiver_id = $2',
+      'SELECT status, friend_request_status, id FROM user_edges WHERE requester_id = $1 AND receiver_id = $2',
       [targetUserId, session.user.id]
     )
 
     if (incomingResult.rows.length > 0) {
+      const edge = incomingResult.rows[0]
       return NextResponse.json({
-        status: incomingResult.rows[0].status,
+        status: edge.status,
+        friend_request_status: edge.friend_request_status,
         direction: 'incoming',
-        edgeId: incomingResult.rows[0].id
+        edgeId: edge.id
       })
     }
 

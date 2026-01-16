@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
     // Check if there's an edge relationship between current user and the specified user
     const result = await pool.query(
-      `SELECT status FROM user_edges 
+      `SELECT status, friend_request_status FROM user_edges 
        WHERE (requester_id = $1 AND receiver_id = $2) 
           OR (requester_id = $2 AND receiver_id = $1)
        LIMIT 1`,
@@ -37,12 +37,14 @@ export async function GET(request: NextRequest) {
     if (result.rows.length === 0) {
       return NextResponse.json({
         status: null,
+        friend_request_status: null,
         message: 'No relationship found'
       })
     }
 
     return NextResponse.json({
-      status: result.rows[0].status
+      status: result.rows[0].status,
+      friend_request_status: result.rows[0].friend_request_status
     })
   } catch (error) {
     console.error('Error fetching friend status:', error)
