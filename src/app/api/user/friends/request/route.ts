@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if edge already exists
+    // Check if edge already exists in this direction
     const existingEdge = await pool.query(
       'SELECT id, status FROM user_edges WHERE requester_id = $1 AND receiver_id = $2',
       [requester_id, receiver_id]
@@ -89,6 +89,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create friend request edge with status='following' and friend_request_status='pending'
+    // This works even if receiver is already following us (creating two separate edges: A->B and B->A)
     const result = await pool.query(
       'INSERT INTO user_edges (requester_id, receiver_id, status, friend_request_status) VALUES ($1, $2, $3, $4) RETURNING id, status',
       [requester_id, receiver_id, 'following', 'pending']

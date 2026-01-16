@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useCallback, useState } from 'react';
 
-interface Counts {
+export interface Counts {
   friends: number;
   requests: number;
   followers: number;

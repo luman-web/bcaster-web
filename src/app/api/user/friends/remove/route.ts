@@ -62,12 +62,26 @@ export async function POST(request: NextRequest) {
          WHERE requester_id = $1 AND receiver_id = $2 AND status = 'outgoing_request'`,
         [currentUserId, user_id]
       )
+      
+      // Delete the friend request event notification from receiver
+      await pool.query(
+        `DELETE FROM user_events 
+         WHERE user_id = $1 AND event_type = 'friend.request' AND actor_id = $2`,
+        [user_id, currentUserId]
+      )
     } else {
-      // Delete any other relationship type
+      // Delete any other relationship type (including 'following' with pending requests)
       await pool.query(
         `DELETE FROM user_edges 
          WHERE requester_id = $1 AND receiver_id = $2`,
         [currentUserId, user_id]
+      )
+      
+      // Delete the friend request event notification from receiver if it exists
+      await pool.query(
+        `DELETE FROM user_events 
+         WHERE user_id = $1 AND event_type = 'friend.request' AND actor_id = $2`,
+        [user_id, currentUserId]
       )
     }
 

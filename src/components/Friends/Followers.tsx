@@ -38,13 +38,13 @@ const FollowersPage: React.FC = () => {
     }
   };
 
-  const handleAccept = async (userId: string) => {
+  const handleAddFriend = async (userId: string) => {
     setActingOn(userId);
     try {
-      const response = await fetch('/api/friends/accept', {
+      const response = await fetch('/api/user/friends/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requester_id: userId }),
+        body: JSON.stringify({ receiver_id: userId }),
       });
 
       if (response.ok) {
@@ -52,7 +52,7 @@ const FollowersPage: React.FC = () => {
         await refetchCounts();
       }
     } catch (error) {
-      console.error('Не удалось принять запрос:', error);
+      console.error('Не удалось отправить запрос:', error);
     } finally {
       setActingOn(null);
     }
@@ -98,7 +98,7 @@ const FollowersPage: React.FC = () => {
                 type="primary"
                 size="small"
                 icon={<CheckOutlined />}
-                onClick={() => handleAccept(follower.id)}
+                onClick={() => handleAddFriend(follower.id)}
                 disabled={actingOn === follower.id}
                 loading={actingOn === follower.id}
               >

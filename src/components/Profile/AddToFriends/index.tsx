@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Button, message } from 'antd'
-import { UserAddOutlined, CheckOutlined, UserOutlined, MinusOutlined } from '@ant-design/icons'
+import { UserAddOutlined, CheckOutlined } from '@ant-design/icons'
 
 interface AddToFriendsProps {
   userId: string
@@ -242,7 +242,6 @@ export default function AddToFriends({ userId, initialStatus = null, onRequestUp
         </Button>
         <Button
           variant="outlined"
-          icon={<MinusOutlined />}
           loading={loading}
           onClick={handleRemoveFriend}
           block
@@ -266,7 +265,6 @@ export default function AddToFriends({ userId, initialStatus = null, onRequestUp
         </Button>
         <Button
           variant="outlined"
-          icon={<MinusOutlined />}
           loading={loading}
           onClick={handleRemoveFriend}
           block
@@ -292,7 +290,6 @@ export default function AddToFriends({ userId, initialStatus = null, onRequestUp
         </Button>
         <Button
           variant="outlined"
-          icon={<MinusOutlined />}
           loading={loading}
           onClick={handleRemoveFriend}
           block
@@ -331,7 +328,6 @@ export default function AddToFriends({ userId, initialStatus = null, onRequestUp
       </Button>
       <Button
         variant="outlined"
-        icon={<UserOutlined />}
         loading={loading}
         onClick={handleFollow}
         block

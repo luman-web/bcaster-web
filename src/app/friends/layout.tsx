@@ -4,6 +4,7 @@ import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Badge } from 'antd';
 import { FriendCountsProvider, useFriendCounts } from '@/contexts/FriendCountsContext';
+import type { Counts } from '@/contexts/FriendCountsContext';
 import styles from './layout.module.scss';
 
 interface Tab {

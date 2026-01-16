@@ -80,20 +80,27 @@ export async function POST(req: NextRequest) {
              WHERE requester_id = $1 AND receiver_id = $2`,
             [current_user_id, user_id]
           )
+          
+          // Delete the friend request notification from receiver if it exists
+          await client.query(
+            `DELETE FROM user_events 
+             WHERE user_id = $1 AND event_type = 'friend.request' AND actor_id = $2`,
+            [user_id, current_user_id]
+          )
         } else {
           await client.query(
             `DELETE FROM user_edges 
              WHERE requester_id = $1 AND receiver_id = $2`,
             [user_id, current_user_id]
           )
+          
+          // Delete the friend request notification from requester if it exists
+          await client.query(
+            `DELETE FROM user_events 
+             WHERE user_id = $1 AND event_type = 'friend.request' AND actor_id = $2`,
+            [current_user_id, user_id]
+          )
         }
-        
-        // Also delete the friend request notification if it exists
-        await client.query(
-          `DELETE FROM user_events 
-           WHERE user_id = $1 AND event_type = 'friend.request' AND actor_id = $2`,
-          [current_user_id, user_id]
-        )
       }
 
       return new Response(JSON.stringify({ success: true }), { status: 200 })
