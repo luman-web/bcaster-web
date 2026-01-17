@@ -98,7 +98,7 @@ export async function GET(req: NextRequest) {
       }
 
       const result = await client.query(query, params)
-      console.log(`Friends API - Type: ${type}, Query results:`, result.rows)
+
       return new Response(JSON.stringify(result.rows), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },

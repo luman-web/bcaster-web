@@ -32,6 +32,7 @@ export default function NavigationProgress() {
       }
       #nprogress .peg {
         box-shadow: 0 0 10px #1890ff, 0 0 5px #1890ff !important;
+        transform: rotate(0deg) translate(0px, 0px);
       }
     `
     document.head.appendChild(style)

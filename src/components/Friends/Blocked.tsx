@@ -59,11 +59,11 @@ const BlockedUsers: React.FC = () => {
   };
 
   if (loading) {
-    return <div className={styles.loading}>Loading blocked users...</div>;
+    return <div className={styles.loading}>Загрузка...</div>;
   }
 
   if (blocked.length === 0) {
-    return <div className={styles.empty}>No blocked users</div>;
+    return <div className={styles.empty}>Нет заблокированных пользователей</div>;
   }
 
   return (
